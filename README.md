@@ -25,6 +25,9 @@
 
 * [Defold Community](https://www.defold.com/community/projects/40372/)
 
+## Арт
+[Подборка арта по проекту](https://www.artstation.com/artwork/oNbym)
+
 ----
 ## Авторы
 

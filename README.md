@@ -7,7 +7,7 @@
 ## Что тут у нас?
 
 Частица игры на движке [Defold](https://www.defold.com/). 
-Первоначально разрабатывалась для [GamesJamDefold](http://gamesjam.org/3008/). Позже была доработана для [Defold GDC Competition] (https://forum.defold.com/t/defold-gdc-competition-2017-the-winning-games/4481).
+Первоначально разрабатывалась для [GamesJamDefold](http://gamesjam.org/3008/). Позже была доработана для [Defold GDC Competition](https://forum.defold.com/t/defold-gdc-competition-2017-the-winning-games/4481).
 
 
 Помимо "джемовой" сущности проекта, также стоит принять во внимание, что игра писалась на Defold'е образца начала 2017. В связи с чем, кроме некоторых морально устаревших решений, тут не исключены "несовместимости" с текущими версиями движка, например:

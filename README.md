@@ -41,6 +41,6 @@ Code:
 ![CC BY](https://licensebuttons.net/l/by/3.0/88x31.png)
 
 
-Other (art/music):
+Other (art, music, etc):
 
 ![CC BY-NC-SA](https://licensebuttons.net/l/by-nc-sa/3.0/88x31.png)

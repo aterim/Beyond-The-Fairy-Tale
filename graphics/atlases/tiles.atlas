@@ -1,0 +1,99 @@
+images {
+  image: "/graphics/tiles/tiles0000.png"
+}
+images {
+  image: "/graphics/tiles/tiles0001.png"
+}
+images {
+  image: "/graphics/tiles/tiles0002.png"
+}
+images {
+  image: "/graphics/tiles/tiles0003.png"
+}
+images {
+  image: "/graphics/tiles/tiles0004.png"
+}
+images {
+  image: "/graphics/tiles/tiles0005.png"
+}
+images {
+  image: "/graphics/tiles/tiles0006.png"
+}
+images {
+  image: "/graphics/tiles/tiles0007.png"
+}
+images {
+  image: "/graphics/tiles/tiles0008.png"
+}
+images {
+  image: "/graphics/tiles/tiles0009.png"
+}
+images {
+  image: "/graphics/tiles/tiles0010.png"
+}
+images {
+  image: "/graphics/tiles/tiles0011.png"
+}
+images {
+  image: "/graphics/tiles/tiles0012.png"
+}
+images {
+  image: "/graphics/tiles/tiles0013.png"
+}
+images {
+  image: "/graphics/tiles/tiles0014.png"
+}
+images {
+  image: "/graphics/tiles/tiles0015.png"
+}
+images {
+  image: "/graphics/tiles/tiles0016.png"
+}
+images {
+  image: "/graphics/tiles/tiles0017.png"
+}
+images {
+  image: "/graphics/tiles/tiles0018.png"
+}
+images {
+  image: "/graphics/tiles/tiles0019.png"
+}
+images {
+  image: "/graphics/tiles/tiles0020.png"
+}
+images {
+  image: "/graphics/tiles/tiles0021.png"
+}
+images {
+  image: "/graphics/tiles/tiles0022.png"
+}
+images {
+  image: "/graphics/tiles/tiles0023.png"
+}
+images {
+  image: "/graphics/tiles/tiles0024.png"
+}
+images {
+  image: "/graphics/tiles/tiles0025.png"
+}
+images {
+  image: "/graphics/tiles/tiles0026.png"
+}
+images {
+  image: "/graphics/tiles/tiles0027.png"
+}
+images {
+  image: "/graphics/tiles/tiles0028.png"
+}
+images {
+  image: "/graphics/tiles/tiles0029.png"
+}
+images {
+  image: "/graphics/tiles/tileSelect.png"
+}
+images {
+  image: "/graphics/tiles/tileSelectEnemy.png"
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0

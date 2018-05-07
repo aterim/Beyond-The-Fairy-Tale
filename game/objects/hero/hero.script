@@ -1,0 +1,330 @@
+local config = require "main.config.config"
+local lvlManager = require "game.baseScripts.levelsManager"
+
+go.property("time", 1)
+
+go.property("go_time", 0.8)
+go.property("battle", false)
+go.property("reflection", false)
+
+
+local function solveSpeed(self, bX, bY, eX, eY)
+	local dx = bX - eX
+    local dy = bY - eY
+    	
+    local dist = math.sqrt(dx * dx + dy * dy)
+    self.speed = dist / 60 / self.go_time
+    
+    self.dist = dist
+end
+
+
+local function on__battle_message(self, message_id)
+	local url = msg.url("#spinemodel") 
+	local anim_name = nil
+	
+	local anim_post = "idle_battle_"..self.user_weapon
+	
+
+	if message_id == hash("battle_attack") then
+		local rnd = (math.random(1, 50) <= 25) and "" or self.user_weapon_random
+    	anim_name = "attack_"..self.user_weapon..rnd
+    	
+    	if self.user_weapon == "fist" then
+    		msg.post("main:/main#script", "start_sound",  {name = "hand_punch0"..tostring(math.random(1, 4))} ) 
+    	else
+    		msg.post("main:/main#script", "start_sound",  {name = "climb_attack0"..tostring(math.random(1, 2))} ) 
+    	end
+
+	elseif message_id == hash("battle_hit") then 
+		anim_name = "hit_"..self.user_weapon
+		msg.post("main:/main#script", "start_sound",  {name = "hero_hit0"..tostring(math.random(1, 2))} ) 
+		
+	elseif message_id == hash("battle_block") then 
+		anim_name = "block_"..self.user_weapon
+		msg.post("main:/main#script", "start_sound",  {name = "dodge0"..tostring(math.random(1, 2))} ) 
+		
+	elseif message_id == hash("battle_win") then 
+		anim_name = "afterbattle_"..self.user_weapon
+		anim_post = "idle_bad"
+		
+	elseif message_id == hash("battle_fail") then 
+		anim_name = "afterbattle_lose_"..self.user_weapon
+		anim_post = ""
+		
+	elseif message_id == hash("dead") then 
+		anim_name = "death_"..self.user_weapon
+		anim_post = ""
+		self.dead = true
+		
+	end
+	
+	if anim_name ~= nil then
+		self.talk = false
+		spine.play(url, anim_name, go.PLAYBACK_ONCE_FORWARD, 0.1, function()
+			spine.play(url, anim_post, go.PLAYBACK_LOOP_FORWARD, 0.1)
+		end)
+	end
+
+end
+
+local function on__request_message(self, message_id)
+
+	if message_id == "add_branch" then
+		local eq = lvlManager.getHeroData().equipments
+		eq[1] = 1
+	elseif message_id == "add_bones" then
+		local eq = lvlManager.getHeroData().equipments
+		eq[3] = 2
+	elseif message_id == "delete_bones" then
+		local eq = lvlManager.getHeroData().equipments
+		eq[3] = 0
+	end
+end
+
+
+------------
+
+
+function init(self)
+	self.go = false
+	self.dead = false
+	self.talk = false
+	self.pause = false
+    
+    self.idTile = 0
+    
+    self.path = {}
+    self.currentPathSegment = 0
+    
+    self.nextX = 0
+    self.nextY = 0
+    
+    self.speed = 0
+    
+    self.dist = 0
+    
+    local eq = lvlManager.getHeroData().equipments
+    self.user_weapon = (eq[1] == 0) and "fist" or "sword"
+    self.user_weapon_random = (eq[1] == 0) and "_uppercut" or "_slash"
+    
+    self.blockTileX = nil -- если мы останавливаемся перед блокирующей клеткой, то стоит проверить направление
+    
+    self.dialog_opponent_id = nil
+    
+    self.fidget_time = 200 + math.random(100, 200)  -- время для почесывания
+    
+    go.set_scale(config.spineScale)
+    
+    
+    if self.reflection then
+    	go.set_rotation(vmath.quat_rotation_y(math.pi))
+    end
+    
+    
+    -- battle
+    if self.battle then
+    	self.prebattle_time = 100 + math.random(100, 300)
+    	
+    	get_timeout(0.4, function()
+    		spine.play("#spinemodel", "prebattle_"..self.user_weapon, go.PLAYBACK_ONCE_FORWARD, 0.1, function()
+				spine.play("#spinemodel", "idle_battle_"..self.user_weapon, go.PLAYBACK_LOOP_FORWARD, 0.1)
+			end) -- idle_battle
+			
+    	end)
+	else	
+		self.user_weapon = "fist"
+		spine.play("#spinemodel", "idle_bad", go.PLAYBACK_LOOP_FORWARD, 0.2)
+	end
+    
+    --local idd = spine.get_go("#spinemodel", "fist")
+    --print(idd)
+    --spine.set_constant(idd, "tint", vmath.vector4(0, 0, 0, 0))
+    --msg.post(idd, "disable")
+    --go.set_scale(0.5, idd)
+end
+
+function final(self)
+    -- Add finalization code here
+    -- Remove this function if not needed
+end
+
+	local function changeDirection(self, x, next)
+		next = next or self.nextX
+		if (x > next) then 
+	    	go.set_rotation(vmath.quat_rotation_y(math.pi))
+	    else
+	    	go.set_rotation(vmath.quat_rotation_y(0))
+	    end
+	end
+
+function update(self, dt)
+
+	if self.dead or self.talk or self.pause then
+		return
+	end	
+    
+    if self.go == false then
+    
+    	-- анимация бездействия
+    	if self.battle == false then
+    		self.fidget_time = self.fidget_time - 1
+			if self.fidget_time <= 0 then
+				local rnd = math.random(1, 4)
+				--if rnd == 3 then rnd = 1 end
+				local fidget = "idle_fidget" .. (rnd > 1 and tostring(rnd) or "")
+				
+				spine.play("#spinemodel", fidget, go.PLAYBACK_ONCE_FORWARD, 0.2, function()
+					spine.play("#spinemodel", "idle_bad", go.PLAYBACK_LOOP_FORWARD, 0.2)
+				end)
+				self.fidget_time = 500 + math.random(200, 300)
+			end
+    	end
+    
+    	return
+    end
+    
+    local pos = go.get(".", "position")
+    
+	local dx = pos.x - self.nextX
+	local dy = pos.y - self.nextY
+	local ang = math.atan2(dy, dx)
+	
+	pos.x = pos.x - math.cos(ang) * self.speed
+	pos.y = pos.y - math.sin(ang) * self.speed
+	
+	local dist = math.sqrt(dx*dx+dy*dy)
+	
+	if self.dist ~= 0 and dist <= self.dist * 0.5 then
+		self.dist = 0
+		
+		msg.post(config.currentLevel, "hero_start", {id = self.path[self.currentPathSegment].id})
+	end
+	
+	if dist < self.speed then
+		self.currentPathSegment = self.currentPathSegment + 1
+		
+		if self.currentPathSegment <= #self.path then -- есть куда идти
+			self.nextX = self.path[self.currentPathSegment].x
+			self.nextY = self.path[self.currentPathSegment].y
+			self.idTile = self.path[self.currentPathSegment].id
+
+	    	solveSpeed(self, pos.x, pos.y, self.nextX, self.nextY)
+	    	
+	    	changeDirection(self, pos.x)
+		else
+			pos.x = self.nextX
+			pos.y = self.nextY
+			self.go = false
+			spine.play("#spinemodel", "idle_bad", go.PLAYBACK_LOOP_FORWARD, 0.1)
+			
+			if self.blockTileX ~= nil then
+				changeDirection(self, pos.x, self.blockTileX)
+			end
+			
+			msg.post(config.currentLevel, "hero_stop", {x = pos.x, y = pos.y / config.ratio})
+			config.zoom = 1.0
+			msg.post("main:/main#script", "end_footstep") 
+		end
+		
+	end
+
+	go.set(".", "position", pos)
+	msg.post(config.currentLevel, "hero_go", {x = pos.x, y = pos.y / config.ratio})
+end
+
+function on_message(self, message_id, message, sender)
+    if message_id == hash("set_position") then
+    	self.idTile = message.id
+    	go.set(".", "position.x", message.x)
+    	go.set(".", "position.y", message.y)
+    	
+    elseif message_id == hash("goto") then
+    
+    	if self.pause then return end
+    
+    	if self.go then
+    		self.path = nil
+    	end
+    
+    	self.currentPathSegment = 2
+    	
+    	self.blockTileX = message.block
+    	
+    	self.path = message.path
+    	self.idTile = self.path[self.currentPathSegment].id
+    	
+    	self.nextX = self.path[self.currentPathSegment].x
+    	self.nextY = self.path[self.currentPathSegment].y
+    	
+    	solveSpeed(self, self.path[1].x, self.path[1].y, self.nextX, self.nextY)
+    	changeDirection(self, self.path[1].x)
+    	
+    	if self.go == false then
+    		spine.play("#spinemodel", "run", go.PLAYBACK_LOOP_FORWARD, 0.1)
+    		msg.post("main:/main#script", "start_footstep") 
+    	end
+    	
+    	self.go = true 
+    	self.fidget_time = 500 + math.random(200, 300)
+    	config.zoom = 1.2
+    	
+    elseif message_id == hash("change_direction") then
+    	changeDirection(self, go.get_position().x, message.x)
+    	
+    elseif message_id == hash("fight_begin") then -- переход в бой с игровой карты
+    	spine.play("#spinemodel", "attack_fist", go.PLAYBACK_ONCE_FORWARD, 0.2, function()
+    		spine.play("#spinemodel", "idle_battle_fist", go.PLAYBACK_LOOP_FORWARD, 0.2)
+    	end)
+    	
+    elseif message_id == hash("talk_begin") then
+    	self.talk = true
+    	--self.fidget_time = 350
+    	
+    	self.dialog_opponent_id = message.id
+    	
+    	local rnd = math.random(1, 4)
+		local obj = {"a", "b", "c", "d"}
+    	
+    	spine.play("#spinemodel", "talk_bad_"..tostring(obj[rnd]), go.PLAYBACK_ONCE_FORWARD, 0.2, function()
+    		spine.play("#spinemodel", "idle_bad", go.PLAYBACK_LOOP_FORWARD, 0.2)
+    		
+    		msg.post(self.dialog_opponent_id, "talk_begin",  {id = go.get_id()})
+    	end)
+    	
+    elseif message_id == hash("talk_end") then
+    	self.talk = false
+    	spine.play("#spinemodel", "idle_bad", go.PLAYBACK_LOOP_FORWARD, 0.2)
+    
+    elseif message_id == hash("pause") then
+    	self.pause = true
+    	if self.go then
+    		spine.play("#spinemodel", "idle_bad", go.PLAYBACK_LOOP_FORWARD, 0.1)
+  			msg.post("main:/main#script", "end_footstep") 
+    	end
+    	--
+    	
+    elseif message_id == hash("unpause") then
+    	self.pause = false
+    	
+    	if self.go then
+    		spine.play("#spinemodel", "run", go.PLAYBACK_LOOP_FORWARD, 0.1)
+    		msg.post("main:/main#script", "start_footstep") 
+    	end
+    	
+    elseif message_id == hash("request") then
+    	on__request_message(self, message.value)
+    	
+    else
+    	on__battle_message(self, message_id)
+    end
+end
+
+function on_input(self, action_id, action)
+    -- Add input-handling code here
+    -- Remove this function if not needed
+end
+
+function get_timeout(value, cb)
+	go.animate("#", "time", go.PLAYBACK_ONCE_FORWARD, 1, go.EASING_LINEAR, 0, value, cb)
+end

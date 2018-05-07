@@ -1,0 +1,18 @@
+images {
+  image: "/graphics/main_menu/bg_full.png"
+}
+images {
+  image: "/graphics/main_menu/game_logo.png"
+}
+images {
+  image: "/graphics/main_menu/mm_credits_btn.png"
+}
+images {
+  image: "/graphics/main_menu/mm_start_btn.png"
+}
+images {
+  image: "/graphics/main_menu/credits_text.png"
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0

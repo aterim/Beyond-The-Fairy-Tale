@@ -1,0 +1,247 @@
+local config = require "main.config.config"
+local strings = require "utils.strings"
+local utils = require "utils.utils"
+local equipment = require "game.ui.equipment.data.equipments"
+local lvlManager = require "game.baseScripts.levelsManager"
+
+
+local function update_page(self)
+	for i = 1, 2 do
+		if self.cur_page == i then
+			gui.play_flipbook(self.pages[i], "eq_dot_empty")
+		else
+			gui.play_flipbook(self.pages[i], "eq_dot_full")
+		end
+	end
+end
+
+local function show_popup(self)
+	gui.set_color(self.popup, vmath.vector4(1, 1, 1, 0))
+	--gui.set_scale(self.body, vmath.vector3(0.7, 0.7, 1))
+	
+	gui.animate(self.popup, "color.w", 1, gui.EASING_OUTSINE, 0.2)
+	--gui.animate(self.body, "scale.x", self.scale, gui.EASING_OUTSINE, 0.2)
+	--gui.animate(self.body, "scale.y", self.scale, gui.EASING_OUTSINE, 0.2)
+end
+
+local function hide_popup(self)
+	gui.set_color(self.popup, vmath.vector4(1, 1, 1, 0))
+	--gui.set_scale(self.body, vmath.vector3(0.7, 0.7, 1))
+	
+	gui.animate(self.body, "color.w", 0, gui.EASING_OUTSINE, 0.2, 0, function()
+		gui.set_enabled(self.popup, false)
+	end)
+	--gui.animate(self.body, "scale.x", self.scale, gui.EASING_OUTSINE, 0.2)
+	--gui.animate(self.body, "scale.y", self.scale, gui.EASING_OUTSINE, 0.2)
+end
+
+	local function get_equipment(id)
+		for i = 1, #equipment.DATA do
+			if equipment.DATA[i].id == id then
+				return equipment.DATA[i]
+			end
+		end
+	end
+	
+	local function update_slots(self)
+		local eq = lvlManager.getHeroData()
+	
+			-- 4 main cells
+		gui.play_flipbook(self.main_cells[1], "eq_icon_weapon")
+		gui.play_flipbook(self.main_cells[2], "eq_icon_hat")
+		gui.play_flipbook(self.main_cells[3], "eq_icon_none")
+		gui.play_flipbook(self.main_cells[4], "eq_icon_none")
+		
+		for i = 1, 10 do
+			gui.play_flipbook(self.cells[i], "eq_icon_none")
+		end
+		
+		for i = 1, 14 do
+			self.hit_eq[i] = 0
+		end
+		
+		local ind
+	
+		for i = 1, #eq do
+			ind = (eq[i][2] > 13) and (eq[i][2] - 10) or eq[i][2]
+			
+			if ind > 3 then
+				local data = get_equipment(eq[i][1])
+				gui.play_flipbook(self.cells[ind-3], data.icon)
+			else
+				gui.play_flipbook(self.main_cells[ind], data.icon)
+			end
+			
+			self.hit_eq[ind + 1] = 1
+		end
+	end
+
+local function show(self)
+	msg.post("#", "enable")
+	msg.post("#", "acquire_input_focus")
+	
+	gui.set_enabled(self.popup, false)
+	
+	local lng = config.language
+	
+	gui.set_text(self.caption, strings.equipment_caption[lng])
+	
+	update_slots(self)
+	
+	update_page(self)
+	
+	gui.set_color(self.body, vmath.vector4(1, 1, 1, 0))
+	gui.set_scale(self.body, vmath.vector3(0.7, 0.7, 1))
+	
+	gui.animate(self.body, "color.w", 1, gui.EASING_OUTSINE, 0.2)
+	gui.animate(self.body, "scale.x", self.scale, gui.EASING_OUTSINE, 0.2)
+	gui.animate(self.body, "scale.y", self.scale, gui.EASING_OUTSINE, 0.2)
+	
+end	
+
+
+local function hide(self)
+	msg.post("#", "release_input_focus")
+	
+	gui.animate(self.body, "color.w", 0, gui.EASING_OUTSINE, 0.2)
+	gui.animate(self.body, "scale.x", 0, gui.EASING_OUTSINE, 0.2)
+	gui.animate(self.body, "scale.y", 0, gui.EASING_OUTSINE, 0.2, 0, function()
+		msg.post("#", "disable")
+	end)
+	
+	self.selected_node[1] = 0
+end
+
+
+function init(self)
+	msg.post("#", "disable")
+	
+	self.hit_eq = {
+		0, 0, 0, 0,
+		0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0
+	}
+
+	self.body = gui.get_node("body")
+	self.caption = gui.get_node("caption")
+	
+	self.popup = gui.get_node("eq_popup/body")
+	
+	self.close_btn = gui.get_node("close")
+	self.left = gui.get_node("left")
+	self.right = gui.get_node("right")
+	
+	self.cur_page = 1
+	
+	self.scale = 1.2
+	
+	self.pages = {
+		gui.get_node("dot1"), gui.get_node("dot2")
+	}
+	
+	self.main_cells = {
+		gui.get_node("eq_icon0/icon"), gui.get_node("eq_icon1/icon"),
+		gui.get_node("eq_icon2/icon"), gui.get_node("eq_icon3/icon")
+	}
+	
+	self.cells = {}
+	self.body_cells = {}
+	for i = 1, 10 do
+		table.insert(self.cells, gui.get_node("general_cell"..tostring(i-1).."/icon"))
+		table.insert(self.body_cells, gui.get_node("general_cell"..tostring(i-1).."/cell"))
+	end
+	
+    gui.set_scale(self.body, vmath.vector3(self.scale, self.scale, 1))
+    gui.set_scale(self.popup, vmath.vector3(self.scale, self.scale, 1))
+    
+    self.selected_node = {0}
+end
+
+function final(self)
+    -- Add finalization code here
+    -- Remove this function if not needed
+end
+
+function update(self, dt)
+    -- Add update code here
+    -- Remove this function if not needed
+end
+
+function on_message(self, message_id, message, sender)
+	if message_id == hash("show") then
+		show(self)
+	end
+end
+
+	local function anim_cells(self)
+		for i = 1, 10 do
+			gui.set_color(self.body_cells[i], vmath.vector4(1, 1, 1, 0))
+			gui.set_scale(self.body_cells[i], vmath.vector3(0.7, 0.7, 1))
+			
+			gui.animate(self.body_cells[i], "color.w", 1, gui.EASING_OUTSINE, 0.1)
+			gui.animate(self.body_cells[i], "scale.x", 1, gui.EASING_OUTSINE, 0.1)
+			gui.animate(self.body_cells[i], "scale.y", 1, gui.EASING_OUTSINE, 0.1)
+		end
+	end
+
+	local function button_close(self, node, parameters)
+		hide(self)
+		msg.post(config.currentLevel, "hide_popup")
+	end
+	
+	local function button_left(self, node, parameters)
+		if self.cur_page > 1 then
+			self.cur_page = self.cur_page - 1
+			update_page(self)
+			anim_cells(self)
+		end
+	end
+	
+	local function button_right(self, node, parameters)
+		if self.cur_page < 2 then
+			self.cur_page = self.cur_page + 1
+			update_page(self)
+			anim_cells(self)
+		end
+	end
+
+function on_input(self, action_id, action)
+    if (action_id == hash("click_screen") or action_id == hash("tap_screen")) then
+    
+    	local enabled = false
+    
+    	if gui.is_enabled(self.popup) then
+    		enabled = true
+    		if gui.pick_node(self.popup, action.x, action.y) then
+    			
+    		end
+    	end
+    
+    	local res = utils.button_reaction(self, self.close_btn, action, button_close, nil, self.selected_node) or 
+    				utils.button_reaction(self, self.left, action, button_left, nil, self.selected_node) or
+    				utils.button_reaction(self, self.right, action, button_right, nil, self.selected_node)
+    				
+    	for i = 1, 4 do
+    		if self.hit_eq[i] == 1 then
+    		
+    		end 
+    	end
+    	
+    	for i = 5, 14 do
+    		if self.hit_eq[i] == 1 then
+    			res = res or utils.button_reaction(self, self.cells[i-4], action, function() print("dfdsf") end, nil, self.selected_node)
+    		end 
+    	end
+    				
+    	if res and enabled then
+    		hide_popup(self)
+    	end
+    				    				
+		return res
+	end
+end
+
+function on_reload(self)
+    -- Add input-handling code here
+    -- Remove this function if not needed
+end

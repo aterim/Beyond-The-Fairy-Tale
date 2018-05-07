@@ -1,0 +1,116 @@
+local config = require "main.config.config"
+
+	local function updateScreenScale()
+	
+		config.width = render.get_window_width()
+		config.height = render.get_window_height()
+		config.halfWidth = config.width * 0.5
+		config.halfHeight = config.height * 0.5
+		
+		config.ratio = math.min(config.defaultWidth / config.width, config.defaultHeight / config.height)
+		config.ratio_max = math.max(config.defaultWidth / config.width, config.defaultHeight / config.height)
+		
+		local countTile = math.floor(config.width / (config.tileWidth / config.ratio))
+		
+		local defaultCountTiles = config.countWidthTile + (config.isMobile and 0 or 1)
+		--print("Count: ", countTile, defaultCountTiles, countTile / defaultCountTiles)
+		config.scale = countTile / defaultCountTiles
+								
+		print("update scale", config.ratio, config.getRatio())
+	end
+
+function init(self)
+    self.tile_pred = render.predicate({"tile"})
+    self.gui_pred = render.predicate({"gui"})
+    self.text_pred = render.predicate({"text"})
+    self.particle_pred = render.predicate({"particle"})
+
+    --self.clear_color = config.bgColor
+    
+    self.view = vmath.matrix4()
+    
+
+  --  window.set_listener(window_callback)
+  	config.defaultWidth = tonumber(sys.get_config("display.width"))
+  	config.defaultHeight = tonumber(sys.get_config("display.height"))
+  	
+  	local sysinfo = sys.get_sys_info()
+  	config.isMobile = (sysinfo.system_name == "Android" or sysinfo.system_name == "iPhone OS")
+  	
+  	self.cameraPosition = vmath.vector3();
+  	
+  	updateScreenScale()
+end
+
+function update(self)
+
+    render.set_depth_mask(true)
+    render.clear({[render.BUFFER_COLOR_BIT] = config.bgColor, [render.BUFFER_DEPTH_BIT] = 1, [render.BUFFER_STENCIL_BIT] = 0})
+
+    render.set_viewport(0, 0, render.get_window_width(), render.get_window_height())
+    render.set_view(self.view)
+
+    render.set_depth_mask(false)
+    render.disable_state(render.STATE_DEPTH_TEST)
+    render.disable_state(render.STATE_STENCIL_TEST)
+    render.enable_state(render.STATE_BLEND)
+    render.set_blend_func(render.BLEND_SRC_ALPHA, render.BLEND_ONE_MINUS_SRC_ALPHA)
+    render.disable_state(render.STATE_CULL_FACE)
+
+
+    render.set_projection(vmath.matrix4_orthographic(-config.halfWidth * config.getRatio(), config.halfWidth * config.getRatio(), 
+    												 -config.halfHeight * config.getRatio(), config.halfHeight * config.getRatio(), -1000, 1000))
+    
+    
+    --render.set_projection(vmath.matrix4_perspective(1, config.width/config.height, -1, 1))
+
+    local constants = render.constant_buffer() 
+	constants.camera_position = vmath.vector4(self.cameraPosition.x, self.cameraPosition.y, 
+		config.vignette_effect * config.width * config.getRatio(), config.height * config.getRatio())
+		
+	--constants.tint = vmath.vector4(0,0,0, 0.1)
+					 
+    render.draw(self.tile_pred, constants)
+    render.draw(self.particle_pred, constants)
+
+	-- render.draw_debug3d()
+	
+    render.set_view(vmath.matrix4())
+    
+	render.set_projection(vmath.matrix4_orthographic(0, render.get_window_width(), 0, render.get_window_height(), -1000, 1000))
+	--render.set_projection(vmath.matrix4_orthographic(0, config.width, 0, config.height, -1000, 1000))
+   
+
+    render.enable_state(render.STATE_STENCIL_TEST)
+    render.draw(self.gui_pred)
+    render.draw(self.text_pred)
+    render.disable_state(render.STATE_STENCIL_TEST)
+
+    render.set_depth_mask(false)
+    render.draw_debug2d()
+
+end
+
+function on_message(self, message_id, message)
+    if message_id == hash("clear_color") then
+        self.clear_color = message.color
+    elseif message_id == hash("set_view_projection") then
+        self.view = message.view
+	elseif message_id == hash("window_resized") then
+		updateScreenScale()
+	elseif message_id == hash("camera_pos") then
+		self.cameraPosition = message
+    end
+end
+
+--[[
+function window_callback(self, event, data)
+    if event == window.WINDOW_EVENT_FOCUS_LOST then
+        print("window.WINDOW_EVENT_FOCUS_LOST")
+    elseif event == window.WINDOW_EVENT_FOCUS_GAINED then
+        print("window.WINDOW_EVENT_FOCUS_GAINED")
+    elseif event == window.WINDOW_EVENT_RESIZED then
+        print("Window resized: ", data.width, data.height)
+    end
+end
+--]]

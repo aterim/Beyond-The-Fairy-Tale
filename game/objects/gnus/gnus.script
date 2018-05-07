@@ -1,0 +1,152 @@
+
+local config = require "main.config.config"
+
+go.property("idTile", 0)
+go.property("opened", false)
+go.property("reflection", false)
+
+go.property("battle", false)
+
+
+local function on__battle_message(self, message_id)
+	local url = msg.url("#spinemodel") 
+	local anim_name = nil
+	local anim_post = "battle_idle"
+	
+	if message_id == hash("fight_begin") then -- на карте
+		spine.play("#spinemodel", "battle_block", go.PLAYBACK_ONCE_FORWARD, 0.1, function()
+    		spine.play("#spinemodel", "battle_idle", go.PLAYBACK_LOOP_FORWARD, 0.2)
+    	end)
+
+	elseif message_id == hash("battle_attack") then 
+    	anim_name = (math.random(1, 10) < 5) and "battle_attack" or "battle_attack_special"
+    	msg.post("main:/main#script", "start_sound",  {name = "bite_by_mosquito01"} ) 
+
+	elseif message_id == hash("battle_hit") then 
+		anim_name = "battle_hit"
+		msg.post("main:/main#script", "start_sound",  {name = "bite_by_mosquito02"} ) 
+		
+	elseif message_id == hash("battle_block") then 
+		anim_name = "battle_block"
+		msg.post("main:/main#script", "start_sound",  {name = "dodge0"..tostring(math.random(1, 2))} ) 
+		
+	elseif message_id == hash("battle_win") then 
+		anim_name = "battle_win"
+		anim_post = anim_name
+		
+	elseif message_id == hash("battle_fail") then 
+		anim_name = "battle_lose"
+		anim_post = ""
+
+	elseif message_id == hash("dead") then 
+		anim_name = "battle_death"
+		anim_post = ""
+		self.dead = true
+		
+	end
+	
+	if anim_name ~= nil then
+		spine.play(url, anim_name, go.PLAYBACK_ONCE_FORWARD, 0.1, function()
+			if anim_post ~= "" then
+				spine.play(url, anim_post, go.PLAYBACK_LOOP_FORWARD, 0.1)
+			end
+			
+			if self.dead then
+				go.animate("#spinemodel", "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 0.2, 0, function()
+					go.delete()
+				end)
+			end
+			
+		end)
+	end
+end
+
+local function on__request_message(self, message_id)
+
+end
+
+
+function init(self)
+
+	if self.opened == false then
+    	msg.post(".", "disable")
+    end
+
+    self.myScale = config.spineScale * 0.7 -- 1.6
+	
+    go.set_scale(self.myScale)
+    
+    if self.battle then
+    	spine.play("#spinemodel", "battle_idle", go.PLAYBACK_LOOP_FORWARD, 0.2)
+    	self.reflection = true
+    end
+    
+    if self.reflection then
+    	go.set_rotation(vmath.quat_rotation_y(-math.pi), "#spinemodel")
+    end
+    
+    self.dialog_opponent_id = nil
+    
+    self.talk = false
+   -- self.fidget_time = 0
+    self.stop_talk = false
+    
+    self.dead = false
+end
+
+function final(self)
+    -- Add finalization code here
+    -- Remove this function if not needed
+end
+
+function update(self, dt)
+    -- Add update code here
+    -- Remove this function if not needed
+end
+
+function on_message(self, message_id, message, sender)
+    if self.dead then return end
+
+	if message_id == hash("open") then
+    	self.opened = true
+    	msg.post(".", "enable")
+    	
+		go.set_scale(0.001)
+		
+		local pos = go.get_position(".")
+		local dy = 350
+		local dt_fall = 0.3
+		local dt_scale = 0.3
+		
+		pos.y = pos.y - dy
+
+		go.animate(".", "scale", go.PLAYBACK_ONCE_FORWARD, self.myScale, go.EASING_OUTSINE, dt_scale)
+
+		go.animate(".", "position.y", go.PLAYBACK_ONCE_FORWARD, pos.y + dy, go.EASING_OUTSINE, dt_fall)
+	
+	elseif message_id == hash("open_fast") then
+    	self.opened = true
+    	msg.post(".", "enable")
+		
+    elseif message_id == hash("up_tile") then
+		local yy = go.get_world_position().y
+		go.animate(".", "position.y", go.PLAYBACK_ONCE_PINGPONG, yy + 15, go.EASING_INCUBIC, 0.3)
+
+    elseif message_id == hash("request") then
+    	on__request_message(self, message.value)
+
+    else
+    	on__battle_message(self, message_id)
+    
+    end
+end
+
+function on_input(self, action_id, action)
+    -- Add input-handling code here
+    -- Remove this function if not needed
+end
+
+function on_reload(self)
+    -- Add reload-handling code here
+    -- Remove this function if not needed
+end

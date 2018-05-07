@@ -1,0 +1,68 @@
+local config = require "main.config.config"
+
+go.property("idTile", 0)
+go.property("opened", false)
+
+go.property("reflection", false)
+
+
+function init(self)
+
+    if self.opened == false then
+    	msg.post(".", "disable")
+    else
+    	particlefx.play("#particlefx")
+    	go.animate("#sprite", "tint.w", go.PLAYBACK_LOOP_PINGPONG, 0.75, go.EASING_INOUTQUAD, 1.5)
+    end
+
+	self.myScale = 1
+    go.set_scale(self.myScale)
+    
+end
+
+
+function on_message(self, message_id, message, sender)
+    if message_id == hash("open") then
+    	self.opened = true
+    	
+    	msg.post(".", "enable")
+    	
+		go.set_scale(0.001)
+		
+		local pos = go.get_position(".")
+		local dy = 350
+		local dt_fall = 0.3
+		local dt_scale = 0.3
+		
+		pos.y = pos.y - dy
+
+		go.animate(".", "scale", go.PLAYBACK_ONCE_FORWARD, self.myScale, go.EASING_OUTSINE, dt_scale)
+
+		go.animate(".", "position.y", go.PLAYBACK_ONCE_FORWARD, pos.y + dy, go.EASING_OUTSINE, dt_fall)
+		
+		particlefx.play("#particlefx")
+		go.animate("#sprite", "tint.w", go.PLAYBACK_LOOP_PINGPONG, 0.75, go.EASING_INOUTQUAD, 1.5)
+	
+	elseif message_id == hash("open_fast") then
+    	self.opened = true
+    	msg.post(".", "enable")
+    	
+    	particlefx.play("#particlefx")
+    	go.animate("#sprite", "tint.w", go.PLAYBACK_LOOP_PINGPONG, 0.75, go.EASING_INOUTQUAD, 1.5)
+		
+    elseif message_id == hash("up_tile") then
+		local yy = go.get_world_position().y
+		go.animate(".", "position.y", go.PLAYBACK_ONCE_PINGPONG, yy + 15, go.EASING_INCUBIC, 0.3)
+		
+	elseif message_id == hash("stop_particles") then
+		particlefx.stop("#particlefx")
+		
+		
+	end
+end
+
+
+function on_reload(self)
+    -- Add reload-handling code here
+    -- Remove this function if not needed
+end

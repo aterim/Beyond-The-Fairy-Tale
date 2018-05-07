@@ -1,0 +1,39 @@
+images {
+  image: "/graphics/tiles/tiles0030.png"
+}
+images {
+  image: "/graphics/tiles/tiles0031.png"
+}
+images {
+  image: "/graphics/tiles/tiles0032.png"
+}
+images {
+  image: "/graphics/tiles/tiles0033.png"
+}
+images {
+  image: "/graphics/tiles/tiles0034.png"
+}
+images {
+  image: "/graphics/tiles/tiles0035.png"
+}
+images {
+  image: "/graphics/tiles/tiles0036.png"
+}
+images {
+  image: "/graphics/tiles/tiles0037.png"
+}
+images {
+  image: "/graphics/tiles/tiles0038.png"
+}
+images {
+  image: "/graphics/tiles/tiles0039.png"
+}
+images {
+  image: "/graphics/tiles/tiles0040.png"
+}
+images {
+  image: "/graphics/tiles/tiles0041.png"
+}
+margin: 0
+extrude_borders: 0
+inner_padding: 0

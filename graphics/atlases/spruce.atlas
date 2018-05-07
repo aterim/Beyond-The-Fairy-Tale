@@ -1,0 +1,138 @@
+images {
+  image: "/graphics/objects/spruce/spr_b_tree_1.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_b_tree_2.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_b_tree_3.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_b_tree_4.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_b_trunk.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_d_tree_1.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_d_tree_2.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_d_tree_3.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_d_tree_4.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_d_tree_5.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_d_trunk.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_db_tree1.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_db_tree2.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_db_tree3.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_db_tree4.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_db_trunk.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_ob_tree_1.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_ob_tree_2.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_ob_tree_3.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_ob_tree_4.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_ob_trunk.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_p_tree1.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_p_tree2.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_p_tree3.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_p_trunk.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_y_tree_1.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_y_tree_2.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_y_tree_3.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_y_tree_4.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_y_trunk.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_yb_tree1.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_yb_tree2.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_yb_tree3.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_yb_tree4.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_yb_tree5.png"
+}
+images {
+  image: "/graphics/objects/spruce/spr_yb_trunk.png"
+}
+images {
+  image: "/graphics/objects/spruce/pin_b_tree_1.png"
+}
+images {
+  image: "/graphics/objects/spruce/pin_b_tree_2.png"
+}
+images {
+  image: "/graphics/objects/spruce/pin_b_tree_3.png"
+}
+images {
+  image: "/graphics/objects/spruce/pin_b_tree_4.png"
+}
+images {
+  image: "/graphics/objects/spruce/pin_b_trunk.png"
+}
+images {
+  image: "/graphics/objects/spruce/pin_s_tree_1.png"
+}
+images {
+  image: "/graphics/objects/spruce/pin_s_tree_2.png"
+}
+images {
+  image: "/graphics/objects/spruce/pin_s_tree_3.png"
+}
+images {
+  image: "/graphics/objects/spruce/pin_s_trunk.png"
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0

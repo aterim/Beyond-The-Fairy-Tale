@@ -1,0 +1,93 @@
+local config = require "main.config.config"
+
+
+go.property("opened", false)
+
+go.property("type", 1)
+
+local skins = {"spruce_default", "spruce_big", "spruce_young", "spruce_default_blue", 
+				"spruce_old_blue", "spruce_young_blue", "spruce_pyramid", "pine_big", "pine_small"}
+
+
+function init(self)
+	-- local url = msg.url("#sprite")
+	--	local prop = hash("tint")
+		
+	self.animCounter = 0
+	
+	self.animTime = math.random(0, 50)
+	
+	if self.opened == false then
+    	msg.post(".", "disable")
+    end
+	
+	local offset = math.random()
+	
+	--local type = 1
+	--math.random(1, 3)
+		
+	self.type = self.type - 19
+	go.set("#spinemodel", "skin", hash(skins[self.type]))
+	spine.play_anim("#spinemodel", skins[self.type], go.PLAYBACK_LOOP_FORWARD, {offset = offset})
+	--spine.play("#spinemodel", skins[type], go.PLAYBACK_LOOP_FORWARD, 0.1)
+	
+	--self.myScale = math.random() * 0.1 + 0.85
+	self.myScale = 0.9
+	
+	local angle = math.random() < 0.5 and 0 or 180
+	go.set_rotation(vmath.quat_rotation_y(math.rad( angle )))
+
+end
+
+function update(self, dt)
+--[[
+	local pos = go.get_position("camera") - go.get_position()
+	
+	local scale = 1 - (pos.y / config.defaultHeight) * 0.06
+	
+	go.set_scale(self.myScale * scale)
+	--]]
+	
+	--local pos = go.get_position()
+	--local dpos = go.get_position("camera") - pos
+	--local dist = math.sqrt( dpos.x * dpos.x + dpos.y * dpos.y) 
+	--local scale = 1 + ( dpos.y / config.defaultHeight) * 0.03 -- dist / 30000
+	--go.set_scale(self.myScale * scale)
+
+
+end
+
+function final(self)
+    spine.cancel("#spinemodel")
+end
+
+function on_message(self, message_id, message, sender)
+   	if message_id == hash("open") then
+    	self.opened = true
+    	
+    	--if math.random() < 0.4 then
+    	msg.post(".", "enable")
+    	
+		go.set_scale(0.001)
+		
+		local pos = go.get_position(".")
+		local dy = 150
+		local dt_fall = 0.3
+		local dt_scale = 0.3
+		
+		pos.y = pos.y - dy
+		go.set_position(pos)
+
+		go.animate(".", "scale", go.PLAYBACK_ONCE_FORWARD, self.myScale, go.EASING_OUTSINE, dt_scale)
+
+		go.animate(".", "position.y", go.PLAYBACK_ONCE_FORWARD, pos.y + dy, go.EASING_OUTSINE, dt_fall)
+		
+	elseif message_id == hash("open_fast") then
+		self.opened = true
+    	msg.post(".", "enable")	
+	
+	elseif message_id == hash("up_tile") then
+		local yy = go.get_world_position().y
+		go.animate(".", "position.y", go.PLAYBACK_ONCE_PINGPONG, yy + 15, go.EASING_INCUBIC, 0.3)
+    end
+end

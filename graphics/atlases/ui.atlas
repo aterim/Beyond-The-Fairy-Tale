@@ -1,0 +1,45 @@
+images {
+  image: "/graphics/ui/dialog/varOption.png"
+}
+images {
+  image: "/graphics/ui/dialog/dialog_bg.png"
+}
+images {
+  image: "/graphics/ui/gameplay/pauseBtn.png"
+}
+images {
+  image: "/graphics/ui/gameplay/equipment_icon.png"
+}
+images {
+  image: "/graphics/objects/other/particle_white_dot.png"
+}
+images {
+  image: "/graphics/ui/gameplay/equip_body_new.png"
+}
+images {
+  image: "/graphics/ui/gameplay/eq_slot_new.png"
+}
+images {
+  image: "/graphics/ui/gameplay/equip_icon_weapon.png"
+}
+images {
+  image: "/graphics/ui/gameplay/equip_other_ico.png"
+}
+images {
+  image: "/graphics/ui/gameplay/equip_shield_new.png"
+}
+images {
+  image: "/graphics/ui/gameplay/eq_icon_001.png"
+}
+images {
+  image: "/graphics/ui/gameplay/eq_icon_002.png"
+}
+images {
+  image: "/graphics/ui/dialog/dlg_back.png"
+}
+images {
+  image: "/graphics/ui/gameplay/equipment_icon_close.png"
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0

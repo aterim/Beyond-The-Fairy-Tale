@@ -1,0 +1,3 @@
+spine_json: "/game/objects/apple_tree_battle/appletree_battle.json"
+atlas: "/graphics/atlases/apple_tree_battle.atlas"
+sample_rate: 45.0

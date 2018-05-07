@@ -1,0 +1,260 @@
+local factories = require "utils.factoriesName"
+local config = require "main.config.config"
+
+local battle_dictionary = require "game.ui.battle.battle_dictionary"
+
+
+require "utils.local_timer"
+local loc_timer = LTimer:new()
+
+go.property("time", 1)
+
+
+local function set_hearts(self)
+	msg.post("#gui", "set_characters", {ucur = self.user_cur_life, umax = self.user_max_life, 
+										ecur = self.enemy_cur_life, emax = self.enemy_max_life})
+end
+
+
+function init(self)
+	msg.post(".", "disable")
+	
+	self.user_cur_life = 0
+	self.user_max_life = 0
+	
+	self.enemy_cur_life = 0
+	self.enemy_max_life = 0
+	
+	self.IDTile = 0
+end
+
+local function show(self, enemy_type)
+
+	msg.post(".", "enable")
+	--msg.post(".", "acquire_input_focus")
+	
+	msg.post("#gui", "show_table", {parent = msg.url(go.get_id()), 
+		def_ucard_bx = 640, def_ucard_by = -220, def_ecard_bx = config.defaultWidth + 200, def_ecard_by = config.defaultHeight * 0.5, 
+		def_ucard_ex = 640, def_ucard_ey =   80, def_ecard_ex = config.defaultWidth - 220, def_ecard_ey = config.defaultHeight * 0.5 - 280,
+		enemy_type = enemy_type} )
+		
+	set_hearts(self)
+	
+	config.battleScreen = go.get_id()
+	
+	local w_ratio = (config.defaultWidth / config.width)
+	local h_ratio = (config.defaultHeight / config.height)
+	
+	local distance = 450
+    
+    if w_ratio < h_ratio then
+    	distance = distance * w_ratio / h_ratio
+    end
+
+	local pos = vmath.vector3(-distance, 0 - 100, 0)
+    self.hero = factory.create("/factories#heroFactory", pos, nil, {battle = true})
+	
+	local scale =  config.height / (800 / config.ratio) * 2.4 * config.spineScale * 0.75
+	
+	go.set_scale(scale , self.hero)
+	
+	local coef_scale
+	
+	if enemy_type == 50 then
+		coef_scale = 0.9
+	elseif enemy_type == 51 then
+		coef_scale = 1.2
+	elseif enemy_type == 52 then
+		coef_scale = 0.8
+	end
+	
+	scale = scale * coef_scale --* 0.7
+
+ 	pos = vmath.vector3(distance , 0 * config.ratio - 100, 0) 
+    self.enemy = factory.create("/factories#"..factories.get_object_factory(enemy_type, true), pos, nil, 
+    	{idTile = -1, opened = true, battle = true})
+	go.set_scale(scale, self.enemy)
+	
+	self.enemy_type = enemy_type - 49
+	
+	msg.post("main:/main#script", "start_battle") 
+
+end
+
+local function hide_battle(self, who_win)
+	go.delete(self.hero)
+	go.delete(self.enemy)
+	self.hero = nil
+	self.enemy = nil
+	
+	msg.post("#gui", "free")
+	msg.post(".", "disable")
+	--msg.post(".", "release_input_focus")
+	
+	-- who_win: 1 - user, 2 - enemy, 3 - no one
+	msg.post(config.currentLevel, "after_battle", {IDTile = self.IDTile, who_win = who_win})
+	
+	
+end
+
+function update(self, dt)
+	loc_timer:update_dt(dt)
+end
+
+	local function new_round(self)
+		
+		--print("new round" , self.user_cur_life, self.enemy_cur_life)
+		
+		if self.user_cur_life > 0 and self.enemy_cur_life > 0 then
+			getTimer(0.4, function() msg.post("#gui", "new_round") end)
+		else
+				
+			getTimer(1, function()
+				msg.post("main:/main#script", "end_battle") 
+				if self.user_cur_life > 0 then
+					msg.post(self.hero, "battle_win")
+					msg.post(self.enemy, "battle_fail")
+					msg.post("main:/main#script", "start_sound", {name = "win"}) 
+				elseif self.enemy_cur_life > 0 then
+					msg.post(self.enemy, "battle_win")
+					msg.post(self.hero, "battle_fail")
+					msg.post("main:/main#script", "start_sound", {name = "lose"}) 
+				else
+					msg.post(self.hero, "battle_fail")
+					msg.post(self.enemy, "battle_fail")
+					msg.post("main:/main#script", "start_sound", {name = "lose"}) 
+				end
+
+				getTimer(1, function()
+
+					getTimer(1.2, function()
+						msg.post("main:/prebattle", "show") -- ui#
+					end)
+					
+					getTimer(2.2, function()
+						local hw
+						if self.user_cur_life <= 0 then
+							hw = 2
+							--msg.post("main:/main#script", "start_sound", {name = "lose"}) 
+							if self.enemy_cur_life <= 0 then
+								hw = 3
+							end
+						else
+							hw = 1
+							--msg.post("main:/main#script", "start_sound", {name = "win"}) 
+						end
+						
+						hide_battle(self, hw)
+					end)
+					
+					getTimer(2.3, function()
+						msg.post("main:/prebattle", "hide") -- ui#
+					end)
+				end)
+			end)
+			return false
+		end
+		
+		return true
+	end
+	
+	local function VAMPIRE(self, enemy_type, card)
+		if self.enemy_cur_life > 0 and enemy_type == 3 and (card == 3 or card == 4) then
+			self.enemy_cur_life = self.enemy_cur_life + 1
+			
+			if self.enemy_cur_life > self.enemy_max_life then
+				self.enemy_cur_life = self.enemy_max_life
+			end
+		end
+	end
+
+function on_message(self, message_id, message, sender)
+    if message_id == hash("show") then
+    	self.user_cur_life = message.user_life
+		self.user_max_life = message.user_life
+		
+		self.enemy_cur_life = message.enemy_life
+		self.enemy_max_life = message.enemy_life
+		
+		self.IDTile = message.IDTile
+		
+    	show(self, message.enemy_type)
+    	
+    elseif message_id == hash("start_battle") then
+    
+	    local ua, ud, ea, ed = battle_dictionary.cards[message.user_weapon][message.user].attack, 
+	    					   battle_dictionary.cards[message.user_weapon][message.user].defence,
+	    					   battle_dictionary.cards[self.enemy_type][message.enemy].attack,
+	    					   battle_dictionary.cards[self.enemy_type][message.enemy].defence
+	    					   
+	    
+    	if ua > 0 then
+	    	msg.post(self.hero, "battle_attack")
+	    	getTimer(0.2, function()
+	    		msg.post(self.enemy, ( (ed < ua) and "battle_hit" or "battle_block") )
+	    		
+	    		self.enemy_cur_life = self.enemy_cur_life - math.max(0, ua - ed)
+	    		--print("self.enemy_cur_life", self.enemy_cur_life, math.max(0, ua - ed), ua, ed)
+	    		
+	    		set_hearts(self)
+	    	end)
+	    	
+	    	if ea > 0 then
+	    		getTimer(0.9, function()
+		    		msg.post(self.enemy, "battle_attack")
+		    		
+		    		getTimer(0.2, function()
+			    		msg.post(self.hero, ( (ud < ea) and "battle_hit" or "battle_block") )
+			    		
+			    		local dmg = math.max(0, ea - ud)
+			    		self.user_cur_life = self.user_cur_life - dmg
+			    		--print("self.user_cur_life 1", self.user_cur_life)
+
+						if dmg > 0 then
+					   		VAMPIRE(self, self.enemy_type, message.enemy)
+					   	end
+			    		
+			    		set_hearts(self)
+			    	end)
+			    	
+			    	-- new round
+			    	getTimer(0.225, function() new_round(self) end)
+			    	
+		    	end)
+	
+		    else
+		    	-- new round
+		    	getTimer(0.225, function() new_round(self) end)
+	    	end
+	    else
+	    	if ea > 0 then
+	    		msg.post(self.enemy, "battle_attack")
+
+	    		getTimer(0.2, function()
+		    		msg.post(self.hero, ( (ud < ea) and "battle_hit" or "battle_block") )
+		    		
+		    		local dmg = math.max(0, ea - ud)
+		    		self.user_cur_life = self.user_cur_life - dmg
+		    		
+		    		if dmg > 0 then
+					   VAMPIRE(self, self.enemy_type, message.enemy)
+					end
+		    		
+			    	set_hearts(self)
+		    	end)
+
+				getTimer(0.225, function() new_round(self) end)
+		    else
+		    	-- passed
+		    	msg.post("#gui", "passed_round")
+		    	getTimer(0.4, function() msg.post("#gui", "new_round") end)
+	    	end
+	    end
+    	
+    end -- end if
+end
+
+
+function getTimer(value, cb)
+	go.animate("#", "time", go.PLAYBACK_ONCE_FORWARD, 1, go.EASING_LINEAR, 0, value, cb)
+end

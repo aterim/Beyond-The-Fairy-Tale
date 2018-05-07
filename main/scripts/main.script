@@ -1,0 +1,248 @@
+
+local config = require "main.config.config"
+local lvlManager = require "game.baseScripts.levelsManager"
+
+go.property("time", 1)
+
+local INTRO = 4
+local MAIN_MENU = 5
+local GAME = 6
+local DEMO = 7
+
+local function load_demo(self)
+   msg.post("main#demo", "load")
+   self.current_scene = DEMO
+end
+
+local function load_main_menu(self)
+   msg.post("main#main_menu", "load")
+   self.current_scene = MAIN_MENU
+end
+
+local function load_game(self)
+   msg.post("main#game_proxy", "load")
+   self.current_scene = GAME
+end
+
+local function load_intro(self)
+   msg.post("main#intro", "load")
+   self.current_scene = INTRO
+end
+
+
+function init(self)
+	--msg.post("@system:", "toggle_profile")
+    msg.post(".", "acquire_input_focus")
+
+	--[[
+    self.sounds = {
+    	{name = "coda", duration = 8.727278911564627, current = 0},
+    	{name = "soft", duration = 34.90909297052154, current = 0},
+    	{name = "culmination", duration = 34.90909297052154, current = 0},
+    	{name = "intense", duration = 34.90909297052154, current = 0}
+    }
+    
+
+    self.current_sound_part = 2
+    self.next_sound_part = 0
+    self.sound_play = false
+    
+    if self.sound_play then
+   		msg.post("/mixer#" .. self.sounds[self.current_sound_part].name, "play_sound", {gain = 0.1})
+   	end
+    
+    self.delta_sound = 0.01
+    --]]
+    
+    --
+    config.bgColor = vmath.vector4(20/255, 20/255, 20/255, 0)
+
+    self.current_scene = 0
+    
+    self.current_footstep = ""
+
+	--load_demo(self)
+	lvlManager.first = true
+	lvlManager.loadSave("slot01")
+	msg.post("/mixer#thema", "play_sound", {gain = 0.1})
+	load_main_menu(self)
+end
+
+function final(self)
+	msg.post(".", "release_input_focus")
+end
+
+function update(self, dt)
+	
+	--[[
+	if self.sound_play == false then
+		return
+	end
+
+	self.sounds[self.current_sound_part].current = self.sounds[self.current_sound_part].current + dt
+	
+	if self.sounds[self.current_sound_part].current >= self.sounds[self.current_sound_part].duration - self.delta_sound then
+		self.sounds[self.current_sound_part].current = 0
+		if self.next_sound_part ~= 0 then
+			self.current_sound_part = self.next_sound_part
+			self.next_sound_part = 0
+		end
+		
+		msg.post("/mixer#" .. self.sounds[self.current_sound_part].name, "play_sound", {gain = 0.1})
+	end
+	--]]
+	
+	--local next = ( (self.next_sound_part == 0) and "nil" or self.sounds[self.next_sound_part].name .. ".wav")
+	--local text = "Current part: "..self.sounds[self.current_sound_part].name .. ".wav\n" .. "Next part: " .. next
+	--msg.post("@render:", "draw_text", {text = text, position = vmath.vector3(50, 820, 0)})
+end
+
+function on_message(self, message_id, message, sender)
+
+	if message_id == hash("begin_game") then
+		msg.post("/mixer#menu_thema", "play_sound", {gain = 0.2})
+		msg.post("main#demo", "disable")
+		msg.post("main#demo", "final")
+		msg.post("main#demo", "unload")
+
+	elseif message_id == hash("proxy_loaded") then
+		msg.post(sender, "init")
+       	msg.post(sender, "enable")
+       	
+       	msg.post("prebattle", "hide")
+       	
+    elseif message_id == hash("proxy_unloaded") then
+		if self.current_scene == MAIN_MENU then
+			load_intro(self)
+			
+		elseif self.current_scene == GAME or self.current_scene == DEMO then
+			load_main_menu(self)
+			
+		elseif self.current_scene == INTRO then
+			load_game(self)
+			
+		end
+       	
+	elseif message_id == hash("load_game") then
+		msg.post("prebattle", "show")
+		
+		lvlManager.first = true
+		lvlManager.loadSave("slot01")
+		
+		getTimer(1.2, function()
+			msg.post("main#intro", "disable")
+			msg.post("main#intro", "final")
+			msg.post("main#intro", "unload")
+			
+			msg.post("/mixer#menu_thema", "stop_sound")
+			msg.post("/mixer#thema", "play_sound", {gain = 0.1})
+		end)
+		
+	elseif message_id == hash("go_menu") then
+		msg.post("prebattle", "show")
+		
+		getTimer(1.2, function()
+			msg.post("main#game_proxy", "disable")
+			msg.post("main#game_proxy", "final")
+			msg.post("main#game_proxy", "unload")
+			
+			msg.post("/mixer#thema", "stop_sound")
+			msg.post("/mixer#menu_thema", "play_sound", {gain = 0.2})
+		end)
+		
+		
+	elseif message_id == hash("load_intro") then
+		msg.post("prebattle", "show")
+		
+		getTimer(1.2, function()
+			msg.post("main#main_menu", "disable")
+			msg.post("main#main_menu", "final")
+			msg.post("main#main_menu", "unload")
+			
+			msg.post("/mixer#menu_thema", "set_gain", {gain = 0.05})
+		end)
+		
+	elseif message_id == hash("start_dialog") then
+		msg.post("/mixer#thema", "set_gain", {gain = 0.05})
+		
+	elseif message_id == hash("end_dialog") then
+		msg.post("/mixer#thema", "set_gain", {gain = 0.1})
+		
+	elseif message_id == hash("start_battle") then
+		msg.post("/mixer#thema", "stop_sound")
+		msg.post("/mixer#battle_thema", "play_sound", {gain = 0.1})
+		
+	elseif message_id == hash("end_battle") then
+		msg.post("/mixer#battle_thema", "stop_sound")
+		msg.post("/mixer#thema", "play_sound", {gain = 0.1, delay = 1.4})
+		
+	elseif message_id == hash("start_footstep") then
+		self.current_footstep = (math.random(1, 50) < 25) and "footstep1" or "footstep2"
+		msg.post("/mixer#"..self.current_footstep, "play_sound", {gain = 0.08})
+		
+	elseif message_id == hash("end_footstep") then
+		msg.post("/mixer#"..self.current_footstep, "stop_sound")
+		
+	elseif message_id == hash("start_sound") then
+		msg.post("/mixer#"..message.name, "play_sound", {gain = message.gain and message.gain or 0.08})
+	
+	elseif message_id == hash("end_sound") then
+		msg.post("/mixer#"..message.name, "stop_sound")
+		
+	end
+end
+
+function on_input(self, action_id, action)
+    if action_id == hash("exit") then
+    	--msg.post("@system:", "exit", {code = 0})
+    	lvlManager.addCurrentSwiper(
+    		{28, 94,	39,100}
+    	)
+    elseif action_id == hash("key_0") then
+    	self.next_sound_part = 0
+    	
+    elseif action_id == hash("key_1") then
+    	self.next_sound_part = 1
+    	
+    elseif action_id == hash("key_2") then
+    	self.next_sound_part = 2
+    	
+    elseif action_id == hash("key_3") then
+    	self.next_sound_part = 3
+    	
+    elseif action_id == hash("key_4") then
+    	self.next_sound_part = 4
+    	
+    end
+end
+
+function getTimer(value, cb)
+	go.animate("#", "time", go.PLAYBACK_ONCE_FORWARD, 1, go.EASING_LINEAR, 0, value, cb)
+end
+
+
+--[[
+function load()
+    local d = crash.load_previous()
+    if d == nil then
+        print("No crash dump found")
+        return
+    end
+    
+    print("Crash [" .. crash.get_sys_field(d, crash.SYSFIELD_ENGINE_VERSION) .. "] [" .. crash.get_sys_field(d, crash.SYSFIELD_ENGINE_HASH) .. "]")
+    print("Signum [" .. crash.get_signum(d) .. "]") 
+    print("Userdata0 = [" .. crash.get_user_field(d, 0) .. "]")
+
+    print("Modules:")
+    pprint(crash.get_modules(d))
+
+    print("Backtrace:")
+    pprint(crash.get_backtrace(d))
+    
+    print("Pretty Backtrace:\n" .. crash.get_extra_data(d))
+
+    crash.release(d)
+
+end
+--]]
+

@@ -1,0 +1,249 @@
+local config = require "main.config.config"
+local lookup = require "utils.lookup"
+
+go.property("tileID", 0)
+go.property("frame", 0)
+go.property("opened", false)
+
+go.property("blocked", 0)
+
+
+--[[
+---------------------------------------------------------------------- LOCAL
+--]]
+
+-- строим полигон
+local function buildBounds(self)
+	local yy = config.tileSide * config.tileScaleY * 0.5
+	local xx = config.tileWidth * 0.5
+	
+	table.insert(self.points, {x = 0, y = -yy * 2})
+	table.insert(self.points, {x = xx, y = -yy})
+	table.insert(self.points, {x = xx, y =  yy})
+	
+	table.insert(self.points, {x = 0, y =  yy * 2})
+	table.insert(self.points, {x = -xx, y =  yy})
+	table.insert(self.points, {x = -xx, y = -yy})
+end
+
+-- проверяем попадание точки в полигон
+local function hit(self, x, y)
+
+	local myPos = go.get_position()
+	myPos = myPos - go.get_position("/camera")
+	
+	if x < myPos.x - config.tileSide or  x > myPos.x + config.tileSide or
+		y < myPos.y - config.tileSide or  y > myPos.y + config.tileSide then
+		return false
+	end
+	
+	for i = 1, 6 do
+		local k = (i < 6 and i + 1 or 1)
+	
+		local det = (self.points[k].x - self.points[i].x) * (self.points[k].y - y + myPos.y) -
+					(self.points[k].x - x + myPos.x) * (self.points[k].y - self.points[i].y)
+		if det > 0 then
+			return false
+		end
+	end
+	
+	return true
+end
+
+
+local function hideSelector(self)
+	if self.blocked ~= 0 then
+		return
+	end
+	
+	msg.post("#selector", "disable")
+	self.selected = false	
+end
+
+
+--[[
+---------------------------------------------------------------------- PUBLIC
+--]]
+
+	local function create_name(int, count_zero)
+		local str = tostring(int)
+		count_zero = count_zero - #str
+		for i = 1, count_zero do
+			str = "0"..str
+		end
+		
+		return str
+	end
+
+function init(self)
+    msg.post("#sprite", "play_animation", { id = hash( "tiles"..create_name(self.frame, 4) ) })
+    hideSelector(self)
+    --
+    self.points = {}
+    buildBounds(self)
+    
+    self.visible = true  -- тайл открыт и мы видим его на экране
+    self.selected = false -- мышь над данным тайлом
+    self.canTap = true
+    
+    local brightness = 1.11
+    local tt = math.random() > 0.5
+
+	if tt then
+		--go.set(msg.url("#spinemodel"), "tint", vmath.vector4(1.0, 1, 1.0, 1.0))
+		go.set(msg.url("#sprite"), "tint", vmath.vector4(brightness, brightness, brightness, 1.0))
+	else
+		go.set(msg.url("#sprite"), "tint", vmath.vector4(1, 1, 1, 1.0))
+	end
+    
+    if self.opened == false then
+    	msg.post(".", "disable")
+    	self.visible = false
+    end
+end
+
+	local function tap(self, x, y, heroStart)
+		if self.visible == false or self.opened == false then
+			return 
+		end
+		
+		if (hit(self, x, y)) then
+		
+			if self.selected == true or self.canTap == false then
+				return 
+			end
+			
+			if heroStart == self.tileID then
+				msg.post(config.currentLevel, "tap_tile", {id = go.get_id(), tid = self.tileID})
+				return
+			end
+			
+			self.canTap = false
+			local yy = go.get_world_position().y
+			go.animate(".", "position.y", go.PLAYBACK_ONCE_PINGPONG, yy + 15, go.EASING_INCUBIC, 0.3, 0,
+				function()
+					self.canTap = true
+				end)
+			
+			msg.post(config.currentLevel, "to_objects", {id = self.tileID, message_id = "up_tile"})
+			
+			msg.post(config.currentLevel, "tap_tile", {id = go.get_id(), tid = self.tileID})
+		else
+		
+			if self.selected and self.blocked == 0 then
+    			go.animate("#selector", "tint.w", go.PLAYBACK_ONCE_FORWARD, 0.0, go.EASING_OUTSINE, 0.1, 0, function()
+    				hideSelector(self)
+    			end)	
+    			self.selected = false
+    		end
+			
+		end
+	end
+	
+function show(self)
+	if self.visible then
+		return
+	end
+
+	msg.post(".", "enable")
+	
+	hideSelector(self)
+	if self.blocked ~= 0 then
+		msg.post("#selector", "enable")
+	end
+	
+	self.visible = true
+end
+
+function hide(self)
+	if self.visible == false then
+		return
+	end
+
+	msg.post(".", "disable")
+
+	self.visible = false
+end
+
+function on_message(self, message_id, message, sender)
+
+    if message_id == hash("move_mouse") then
+    	-- move(self, message.x, message.y)
+    elseif message_id == hash("tap_screen") then
+    	tap(self, message.x, message.y, message.heroStart)
+    	
+    elseif message_id == hash("select") then
+    	if self.selected == false and self.blocked == 0 then
+			self.selected = true	
+			
+			msg.post("#selector", "enable")
+			
+			go.set("#selector", "tint.w", 0)
+			go.animate("#selector", "tint.w", go.PLAYBACK_ONCE_FORWARD, 1.0, go.EASING_OUTSINE, 0.1)
+			go.animate("#selector", "tint.w", go.PLAYBACK_ONCE_FORWARD, 0.0, go.EASING_OUTSINE, 0.2, 0.2, function()
+    				hideSelector(self)
+    			end)
+		end
+	
+	elseif message_id == hash("open_fast") then	
+		show(self)
+		self.opened = true
+		
+    elseif message_id == hash("open") then
+    	--self.opened = true
+    	show(self)
+    	
+		go.set(".", "scale", 0.001)
+		
+		local pos = go.get_position(".")
+		local dy = 350 
+		pos.y = pos.y - dy
+		go.set_position(pos, ".")
+
+		go.animate(".", "scale", go.PLAYBACK_ONCE_FORWARD, 1, go.EASING_OUTSINE, 0.26)
+		go.animate(".", "position.y", go.PLAYBACK_ONCE_FORWARD, pos.y + dy, go.EASING_OUTSINE, 0.26, 0, 
+			function()
+				self.opened = true
+			end
+			)
+			
+	elseif message_id == hash("blocked") then	
+		self.blocked = message.type
+		
+		if self.blocked == 1 then
+			go.set("#selector", "tint.w", 1)
+			
+			if self.opened then
+				msg.post("#selector", "enable")
+			end
+			
+			msg.post("#selector", "play_animation", { id = hash( "tileSelectEnemy" ) })
+			
+			go.animate("#selector", "scale.x", go.PLAYBACK_LOOP_PINGPONG, 0.9, go.EASING_INOUTQUAD, 0.8) --EASING_INCIRC
+			go.animate("#selector", "scale.y", go.PLAYBACK_LOOP_PINGPONG, 0.9, go.EASING_INOUTQUAD, 0.8)
+			go.animate("#selector", "tint.w", go.PLAYBACK_LOOP_PINGPONG, 0.5, go.EASING_INOUTQUAD, 0.8)
+		end
+		
+	elseif message_id == hash("unblocked") then	
+		self.blocked = 0
+		go.cancel_animations("#selector", "scale.x")
+		go.cancel_animations("#selector", "scale.y")
+		go.cancel_animations("#selector", "tint.w")
+		go.animate("#selector", "tint.w", go.PLAYBACK_ONCE_FORWARD, 0.0, go.EASING_OUTSINE, 0.2, 0.2, function()
+			msg.post("#selector", "play_animation", { id = hash( "tileSelect" ) })
+			hideSelector(self)
+		end)
+		
+    end
+end
+
+function on_input(self, action_id, action)
+    -- Add input-handling code here
+    -- Remove this function if not needed
+end
+
+function on_reload(self)
+    -- Add reload-handling code here
+    -- Remove this function if not needed
+end
+

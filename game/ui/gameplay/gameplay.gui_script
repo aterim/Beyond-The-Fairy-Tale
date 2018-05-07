@@ -1,0 +1,180 @@
+local config = require "main.config.config"
+local utils = require "utils.utils"
+
+local equipment = require "game.ui.equipment.data.equipments"
+local lvlManager = require "game.baseScripts.levelsManager"
+
+
+function init(self)
+	msg.post("#", "release_input_focus")
+    --self.pause = gui.get_node("pause")
+    self.book = gui.get_node("book")
+    
+    self.mask = gui.get_node("mask")
+    
+    self.tape = gui.get_node("tape")
+    self.tape_open = false
+    
+    self.cells_hit = {0, 0, 0, 0, 0}
+    
+    self.cells = {}
+    for i = 1, 5 do
+    	table.insert(self.cells, gui.get_node("eq_slot"..tostring(i-1).."/icon"))
+    end
+    
+    --gui.set_color(self.pause, vmath.vector4(1, 1, 1, 0))
+    gui.set_color(self.book, vmath.vector4(1, 1, 1, 0))
+    gui.set_color(self.tape, vmath.vector4(1, 1, 1, 0))
+    
+    --utils.re_position(self.pause)
+    utils.re_position(self.book)
+    
+    local pos_book = gui.get_position(self.book)
+    gui.set_position(self.mask, pos_book)
+    
+    --utils.re_position(self.tape)
+    
+    
+    self.type_x = gui.get_position(self.tape).x
+    
+    --gui.set_position(self.tape, self.tape_pos)
+    
+    self.selected_node = {0}
+end
+
+function final(self)
+    -- Add finalization code here
+    -- Remove this function if not needed
+end
+
+function update(self, dt)
+    -- Add update code here
+    -- Remove this function if not needed
+end
+
+	local function get_equipment(id)
+		for i = 1, #equipment.DATA do
+			if equipment.DATA[i].id == id then
+				return equipment.DATA[i]
+			end
+		end
+		
+		return nil
+	end
+
+	local function button_book(self, node, parameters)
+		--msg.post(config.currentLevel, "show_equipment")
+		self.tape_open = not self.tape_open
+		
+		if self.tape_open then
+		
+			if parameters and parameters.click == true then
+				msg.post("main:/main#script", "start_sound",  {name = "window_open"} ) 
+			end
+		
+			gui.play_flipbook(self.book,  "equipment_icon_close")
+			
+			local eq = lvlManager.getHeroData().equipments
+		
+			gui.set_color(self.tape, vmath.vector4(1, 1, 1, 1))
+			local ico
+			for i = 1, #self.cells do
+
+				if eq[i] ~= 0 then
+					local data = get_equipment(eq[i])
+					ico = data.icon
+					
+					self.cells_hit[i] = 1
+				else			
+	    			 if i == 1 then
+	    			 	ico = "equip_icon_weapon"
+	    			 elseif i == 2 then
+	    			 	ico = "equip_shield_new"
+	    			 else 
+	    			 	ico = "equip_other_ico"
+	    			 end
+	    			 
+	    			 self.cells_hit[i] = 0
+				end
+    			 
+				gui.play_flipbook(self.cells[i], ico)
+    		end
+    	else
+    		gui.play_flipbook(self.book, "equipment_icon")
+    		
+    		--if parameters and parameters.click == true then
+				msg.post("main:/main#script", "start_sound",  {name = "window_close"} ) 
+			--end
+		end
+		
+		local pos = gui.get_position(self.tape)
+		pos.x = (self.tape_open and 330 or self.type_x)
+		
+		gui.animate(self.tape, gui.PROP_POSITION, pos, gui.EASING_OUTCIRC, 0.3)
+	end
+
+function on_message(self, message_id, message, sender)
+    if message_id == hash("show") then
+    	msg.post("#", "acquire_input_focus")
+		self.selected_node[1] = 0
+		
+    	--gui.animate(self.pause, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 1), gui.EASING_OUTSINE, 0.2, 0.3)
+    	gui.animate(self.book, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 1), gui.EASING_OUTSINE, 0.2, 0.3)
+    	gui.set_color(self.tape, vmath.vector4(1, 1, 1, 0))
+    	
+    	if self.tape_open then
+    		self.tape_open = false
+    		local pos = gui.get_position(self.tape)
+			pos.x = 330
+			gui.set_position(self.tape, pos)
+    	end
+    	
+    elseif message_id == hash("hide") then
+    	msg.post("#", "release_input_focus")
+    	
+    	--gui.animate(self.pause, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 0), gui.EASING_OUTSINE, 0.2, 0.1)
+    	gui.animate(self.book, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 0), gui.EASING_OUTSINE, 0.2, 0.1)
+    	
+    	if self.tape_open == false then
+    		gui.set_color(self.tape, vmath.vector4(1, 1, 1, 0))
+    	else
+    		button_book(self, nil, nil)
+    		gui.animate(self.tape, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 0), gui.EASING_OUTSINE, 0.1)
+    	end
+    end
+end
+
+function on_input(self, action_id, action)
+    if (action_id == hash("click_screen") or action_id == hash("tap_screen")) then
+    	local res = utils.button_reaction(self, self.book, action, button_book, nil, self.selected_node, {scale = gui.get_scale(self.book).z, click = true})
+
+    	
+    	--res = res or utils.button_reaction(self, self.pause, action, nil, nil, self.selected_node, {scale = gui.get_scale(self.pause).z})
+    		
+    	if res == false and self.tape_open then
+    	
+    		local pick_tape = gui.pick_node(self.tape, action.x, action.y)
+    		res = res or pick_tape
+    		
+    		if action.released then
+    			if pick_tape == false then
+	    			button_book(self, nil, nil)
+	    		end
+    		end
+ 
+    	end	
+    	
+    	for i = 1, #self.cells do
+    		if self.cells_hit[i] ~= 0 then
+    			utils.button_reaction(self, self.cells[i], action, nil, nil, self.selected_node)
+    		end
+    	end
+    				    				
+		return res
+	end
+end
+
+function on_reload(self)
+    -- Add input-handling code here
+    -- Remove this function if not needed
+end

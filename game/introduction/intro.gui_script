@@ -1,0 +1,126 @@
+local config = require "main.config.config"
+local utils = require "utils.utils"
+require "utils.local_timer"
+local loc_timer
+
+
+local TEXT = {
+	"Once upon a time there lived a man and his wife. They had two sons. The man would go hunting, and whilst he was hunting, his wife would stay home watching the children and doing the house chores.",
+	"One day the man went to the forest to hunt for some game, but he never came back. Long would they wait for him, long would they search for him - all was in vain, as if he had vanished in thin air. Long had the family mourned, but there was nothing they could do.",
+	"And so they lived together, the three of them. Somehow or other, several years passed. The elder brother Ivan grew into a strong young man. Such great help he was to his mother and such a proper example he set to his younger brother. Little by little, their life was resuming the normal course, until the new trouble came...",
+	"One day Ivan went to fetch some water, and his younger brother ran after him. No sooner than they left the yard, the sky went dark with clouds, the trees began rumbling around them, and suddenly, out of nowhere, in swooped the magic swan-geese upon them. Whilst some were beating Ivan with their wings, the others snatched up the younger brother and carried him away to the woods.",
+	"Quickly rushed Ivan after the birds, swiftly was he catching up with them, when all of a sudden they turned into the wind and in the twinkling of an eye slipped away past him into the deepest heart of the wood. And that was the last he saw of them! Such sorrow felt Ivan, looking around him, but all he could see was dense forest everywhere, neither his brother, no his way back home."
+}
+
+	local function swap_text(self, num, time)
+		local color = vmath.vector4(1, 1, 1, 0)
+		loc_timer:get_timeout(time, function()
+			color.w = 0
+			gui.animate(self.text, gui.PROP_COLOR, color, gui.EASING_OUTCIRC, 0.4, 0, function()
+				gui.set_text(self.text, TEXT[num])
+				
+				color.w = 1
+				gui.animate(self.text, gui.PROP_COLOR, color, gui.EASING_OUTCIRC, 0.2, 1)
+			end)
+		end)
+	end
+
+function init(self)
+	msg.post(".", "acquire_input_focus")
+
+	self.text = gui.get_node("text")
+	self.bg = gui.get_node("bg")
+	local scale = 1/config.ratio * config.ratio_max 
+    gui.set_scale(self.bg, vmath.vector3(scale,scale,scale))
+	
+	self.hold_box = gui.get_node("hold_box")
+	self.progress = gui.get_node("progress")
+	
+	gui.set_enabled(self.progress, false)
+	
+	loc_timer = LTimer:new()
+	
+	local color = vmath.vector4(1, 1, 1, 0)
+	
+	gui.set_text(self.text, TEXT[1])
+	
+	local scale = gui.get_scale(self.progress)
+	scale.x = 0.001
+	gui.set_scale(self.progress, scale)
+	
+	gui.set_color(self.text, color)
+	color.w = 1
+	gui.animate(self.text, gui.PROP_COLOR, color, gui.EASING_OUTCIRC, 0.2, 1)
+	
+	color = gui.get_color(self.hold_box)
+	color.w = 0
+	gui.set_color(self.hold_box , color)
+	color.w = 1
+	gui.animate(self.hold_box , gui.PROP_COLOR, color, gui.EASING_OUTCIRC, 0.2, 1.2)
+	
+	utils.re_position(self.hold_box)
+	
+	swap_text(self, 2, 12.5)
+	swap_text(self, 3, 32.5)
+	swap_text(self, 4, 56.0)
+	swap_text(self, 5, 81.0)
+	
+	loc_timer:get_timeout(112, function()
+		hide(self)
+	end)
+end
+
+function final(self)
+    --loc_timer = nil
+    msg.post(".", "release_input_focus")
+end
+
+function update(self, dt)
+    if loc_timer then
+		loc_timer:update_dt(dt)
+	end
+end
+
+function on_message(self, message_id, message, sender)
+    -- Add message-handling code here
+    -- Remove this function if not needed
+end
+
+function hide(self)
+	loc_timer:clear_all()
+	msg.post(".", "release_input_focus")
+	msg.post(".", "stop_sound_actor")
+	
+	--msg.post("main:/", "stop_sound_actor")
+	msg.post("main:/main#script", "load_game") 
+end
+
+function on_input(self, action_id, action)
+    if (action_id == hash("click_screen") or action_id == hash("tap_screen")) then
+    	if action.released == false then
+    		local scale = gui.get_scale(self.progress)
+    		
+    		if (scale.x - 0.001) < 0.005 then
+    			gui.set_enabled(self.progress, true)
+    		end
+    		
+			scale.x = scale.x + 0.01
+			
+			if scale.x >= 1 then
+				scale.x = 1
+				hide(self)
+			end
+			gui.set_scale(self.progress, scale)
+		else
+			local scale = vmath.vector3(0.001, 1, 1)
+			gui.animate(self.progress, gui.PROP_SCALE, scale, gui.EASING_OUTCIRC, 0.1, 0, function()
+				gui.set_enabled(self.progress, false)
+			end)
+    	end
+    end
+end
+
+function on_reload(self)
+    -- Add input-handling code here
+    -- Remove this function if not needed
+end

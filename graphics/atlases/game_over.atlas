@@ -1,0 +1,15 @@
+images {
+  image: "/graphics/ui/game_over/game_over_body.png"
+}
+images {
+  image: "/graphics/ui/game_over/game_over_btn_menu.png"
+}
+images {
+  image: "/graphics/ui/game_over/game_over_btn_replay.png"
+}
+images {
+  image: "/graphics/ui/game_over/game_over_text.png"
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0

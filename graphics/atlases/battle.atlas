@@ -1,0 +1,69 @@
+images {
+  image: "/graphics/ui/battle/card.png"
+}
+images {
+  image: "/graphics/ui/battle/boostSlot.png"
+}
+images {
+  image: "/graphics/ui/battle/card_bg_boost.png"
+}
+images {
+  image: "/graphics/ui/battle/boostIcon_test.png"
+}
+images {
+  image: "/graphics/ui/battle/new_boost.png"
+}
+images {
+  image: "/graphics/ui/battle/card2.png"
+}
+images {
+  image: "/graphics/ui/battle/card3.png"
+}
+images {
+  image: "/graphics/ui/battle/passed.png"
+}
+images {
+  image: "/graphics/ui/battle/heart_empty.png"
+}
+images {
+  image: "/graphics/ui/battle/heart_full.png"
+}
+images {
+  image: "/graphics/ui/battle/heart_half.png"
+}
+images {
+  image: "/graphics/ui/battle/battle_panel_down.png"
+}
+images {
+  image: "/graphics/ui/battle/battle_panel_top.png"
+}
+images {
+  image: "/graphics/ui/battle/battle_icon.png"
+}
+images {
+  image: "/graphics/ui/battle/battle_temp_bg.png"
+}
+images {
+  image: "/graphics/ui/battle/card_body.png"
+}
+images {
+  image: "/graphics/ui/battle/card_icon_attack.png"
+}
+images {
+  image: "/graphics/ui/battle/card_icon_attack_shield.png"
+}
+images {
+  image: "/graphics/ui/battle/card_icon_none.png"
+}
+images {
+  image: "/graphics/ui/battle/card_icon_shield.png"
+}
+images {
+  image: "/graphics/ui/battle/card_mini_icon_attack.png"
+}
+images {
+  image: "/graphics/ui/battle/card_mini_icon_shield.png"
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0

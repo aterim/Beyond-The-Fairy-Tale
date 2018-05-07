@@ -1,0 +1,914 @@
+local config = require "main.config.config"
+local utils = require "utils.utils"
+local lookup = require "utils.lookup"
+local factories = require "utils.factoriesName"
+
+require "game.baseScripts.nodeClass"
+
+local lvlManager = require "game.baseScripts.levelsManager"
+
+go.property("time", 1)
+go.property("update", true)
+
+
+--[[
+---------------------------------------------------------------------- LOCAL
+--]]
+
+
+local function setCameraPosition(x, y, type)
+	type = type or "look_at"
+
+	--print("ID:", go.get_id())
+	msg.post("/camera", type, { x = x, y = y})
+end
+
+local function setCameraPositionFromTileID(self, id, type)
+	local pos = utils.positionFromTileID(id, self.currentLevelData.width, self.currentLevelData.heigth, 
+							config.tileWidth, config.tileOffsetY, config.ratio)
+							
+	setCameraPosition(pos.x, pos.y, type)
+end
+
+local function findTileID(self, tid)
+
+	for i = 1, #self.tilesID do
+		if (self.tilesID[i].tid == tid) then
+			return self.tilesID[i].id
+		end
+	end
+
+end
+
+local function findNode(self, id)
+	for i = 1, #self.currentLevelData.nodes do
+		if self.currentLevelData.nodes[i].ID == id then
+			return self.currentLevelData.nodes[i]
+		end
+	end
+	
+	return nil
+end
+
+local function findNodeFromTile(self, idTile)
+	for i = 1, #self.currentLevelData.nodes do
+		if self.currentLevelData.nodes[i].IDTile == idTile then
+			return self.currentLevelData.nodes[i]
+		end
+	end
+	
+	return nil
+end
+
+-- LOAD LEVEL
+local function loadCurrentMap(self, hard)
+
+	config.__zoom = 0.94
+	
+	if hard then
+		lvlManager.loadSave("slot01")
+	end
+
+	if lvlManager.isSavedLevel() then 	-- если уже есть готовый уровень, то просто загружаем его
+		self.currentLevelData = {}
+		
+		lvlManager.mirror(self.currentLevelData, lvlManager.current_level_data())
+
+		setCameraPositionFromTileID(self, self.currentLevelData.heroStart, "set_up")
+		
+		local pos = utils.positionFromTileID(self.currentLevelData.heroStart, self.currentLevelData.width, self.currentLevelData.heigth, 
+							config.tileWidth, config.tileOffsetY)
+							
+		if self.heroID ~= nil then go.delete(self.heroID)end
+		self.heroID = factory.create("/factories#heroFactory_mini", pos, nil, {reflection = self.hero_reflection})
+		config.heroID = self.heroID
+		self.hero_dead = false
+		
+		return
+	end
+	
+	-- иначе создаем
+	self.currentLevelData = lvlManager.createLevel()
+	
+	-- загружаем исходники
+	local levelData = lvlManager.buildCurrentLevel()  --loadLevel(name)
+
+	self.currentLevelData.heroStart = levelData.heroStart
+	self.currentLevelData.width = levelData.width
+	self.currentLevelData.heigth = levelData.heigth
+
+	-- set camera
+	setCameraPositionFromTileID(self, levelData.heroStart, "set_up")
+	
+	local pos = utils.positionFromTileID(levelData.heroStart, levelData.width, levelData.heigth, 
+							config.tileWidth, config.tileOffsetY)
+							
+	if self.heroID ~= nil then go.delete(self.heroID)end
+	self.heroID = factory.create("/factories#heroFactory_mini", pos, nil, {reflection = self.hero_reflection})
+	config.heroID = self.heroID
+	self.hero_dead = false
+	
+	-- load tiles
+	
+	local tileSet = levelData.tileSet
+	local mapData = levelData.mapData
+
+	for i = 1, #mapData do
+		local pos = utils.positionFromTileID(mapData[i][2], levelData.width, levelData.heigth, 
+							config.tileWidth, config.tileOffsetY)
+							
+		--pos.x = pos.x + (mapData[i][3] or 0)
+		--pos.y = pos.y + (mapData[i][4] or 0)
+		local opened = mapData[i][3] or false
+		
+		--local value = tileSet[mapData[i][1]]
+		--local key = hash(value)
+		--lookup.add(key, value)
+		
+						
+		table.insert(self.currentLevelData.tiles, {id = -1, tid = mapData[i][2], position = vmath.vector3(pos.x, pos.y, 0), 
+						gid = mapData[i][2], frame = mapData[i][1], opened = opened, objects = {} })
+	end
+	
+	local nodes = levelData.nodes
+	
+	for i = 1, #nodes do
+							-- ID, 			IDTile,		IDParent
+		--local node = Node:new(nodes[i][1], nodes[i][2], nodes[i][3], levelData.width, levelData.heigth) 
+		local node = {
+			ID = nodes[i][1], IDTile = nodes[i][2], IDParent = nodes[i][3], 
+			pos = utils.positionFromTileID(nodes[i][2], levelData.width, levelData.heigth, config.tileWidth, config.tileOffsetY, 1),
+			block = -1, blockID = nil, mark = false,
+			nodes = {}
+		}
+		
+		if nodes[i][3] ~= -1 then 	-- если есть родитель
+			local parent = findNode(self, nodes[i][3])
+			--parent:addChild(node.ID)
+			table.insert(parent.nodes, node.ID)
+		end
+		
+		table.insert(self.currentLevelData.nodes, node)
+	end
+	
+	local objects = levelData.objects;
+	local mapScaleError = 1 --2.521 	-- эта хуйня из-за старого редактора и разности скейлов
+	
+	for i = 1, #objects do
+
+		local pos = utils.positionFromTileID(objects[i][2], levelData.width, levelData.heigth, 
+							config.tileWidth, config.tileOffsetY)
+							
+		pos.x = pos.x + objects[i][3] * mapScaleError
+		pos.y = pos.y - objects[i][4] * mapScaleError
+
+		for j = 1, #self.currentLevelData.tiles do
+		
+			if self.currentLevelData.tiles[j].tid == objects[i][2] then
+				table.insert(self.currentLevelData.tiles[j].objects, {
+					id = -1, type = objects[i][1],  position = vmath.vector3(pos.x, pos.y, 0), dialog = objects[i][5], reflection = objects[i][6],
+					opened = self.currentLevelData.tiles[j].opened
+				})
+				break
+			end -- if	
+		end -- for
+			
+		end -- for #objects
+	
+	-- на всякий
+	levelData = nil
+	tileSet = nil
+	mapData = nil
+	objects = nil
+	--self.currentLevelData = lvlManager.loadCurrentLevel()
+	
+	self.currentLevelData = {}	
+	lvlManager.mirror(self.currentLevelData, lvlManager.current_level_data())
+end
+
+
+-- @idBegin, @idEnd - иды нодов
+local function __findPath(self, idBegin, idEnd, pathRes)
+
+	if idBegin == -1 or idEnd == -1 then
+		return null
+	end
+	
+	if idBegin == idEnd then
+		if pathRes == nil then
+			pathRes = {}
+		end
+		table.insert(pathRes, idBegin)
+		return pathRes
+	end
+
+	local var = {}
+	local node = null
+	
+	if pathRes ~= null then
+		for i = 1, #pathRes do
+			table.insert(var, pathRes[i])
+		end
+	end
+	
+	table.insert(var, idBegin)
+	
+	node = findNode(self, idBegin)
+	
+	if node.mark or node.block ~= -1 then
+		return null
+	end
+	
+	node.mark = true
+	
+	local vv
+	
+	if idBegin > idEnd then 
+		vv = __findPath(self, node.IDParent, idEnd, var)
+		
+		if vv == null then
+			for i = 1, #node.nodes do
+				vv = __findPath(self, node.nodes[i], idEnd, var)
+				if vv ~= null then
+					return vv
+				end
+			end
+			
+			node.mark = false
+			return null
+		end
+		
+		return vv
+	else 
+		
+		for i = 1, #node.nodes do
+			vv = __findPath(self, node.nodes[i], idEnd, var)
+			
+			if vv ~= null then
+				return vv
+			end
+		end
+		
+		vv = __findPath(self, node.IDParent, idEnd, var)
+		if vv ~= null then
+			return vv
+		end
+	end
+	
+	node.mark = false
+	return null
+end
+
+-- @idBegin, @idEnd - иды ТАЙЛОВ
+local function findPath(self, idBegin, idEnd)
+
+	if idBegin == idEnd then
+		return null
+	end
+
+	local node = null
+	
+	node = findNodeFromTile(self, idBegin)
+	
+	if node == null then
+		return null
+	end
+	
+	local begin = idBegin
+	idBegin = node.ID
+	
+	node = findNodeFromTile(self, idEnd)
+	
+	if node == null  then -- or node.block ~= -1
+		return null
+	end
+	
+	idEnd = node.ID
+	
+	for i = 1, #self.currentLevelData.nodes do
+		self.currentLevelData.nodes[i].mark = false
+	end
+	
+	local path = null
+	
+	if node.block ~= -1 then  -- если на тайле блок
+		self.blockTile.type = node.block
+		self.blockTile.IDTile = node.IDTile
+		self.blockTile.IDObject = node.blockID
+	
+		if idBegin < idEnd then  -- эти перестановки нужны чисто для возможного улучшения  производительности
+			
+			path = __findPath(self, idBegin, node.IDParent, null) -- 1
+			
+
+			if path == null then
+				for i = 1, #node.nodes do
+					path = __findPath(self, idBegin, node.nodes[i], null) -- 2
+					if path ~= null then
+						break
+					end
+				end
+			end	
+		else
+	
+			for i = 1, #node.nodes do
+				path = __findPath(self, idBegin, node.nodes[i], null) -- 2
+				if path ~= null then
+					break
+				end
+			end
+		
+			if path == null then
+				path = __findPath(self, idBegin, node.IDParent, null) -- 1
+			end
+		end
+		
+		if path == null then
+			return null
+		end
+	end  -- если на тайле блок | конец
+	
+	
+	if path == null then
+		path = __findPath(self, idBegin, idEnd, null)
+	end
+	
+	if path == null then
+		return null
+	elseif #path == 1 then
+		-- это может произойти только в случае, если мы стоим перед заблокированной клеткой и кликнули на нее
+		if self.hero_go == false then 
+			blockCellActivate(self)
+		end
+		return null
+	end
+	
+	local coords = {}
+	
+	for i = 1, #path do
+		node = findNode(self, path[i])
+		table.insert(coords, {x = node.pos.x, y = node.pos.y, id = node.IDTile})
+	end
+
+	return coords
+end
+
+
+--[[
+---------------------------------------------------------------------- PUBLIC
+--]]
+
+
+function init(self)
+    
+    msg.post("/camera", "set_zoom", { scale = config.scale})
+    
+    --msg.post("main:/camera#script", "test")
+    
+    set_focus(self, true)
+
+    math.randomseed(os.time())
+
+	self.heroID = nil
+	config.heroID = self.heroID
+	self.hero_go = false
+	self.hero_reflection = false
+	
+	self.hero_dead = false
+	
+	self.first_render = true
+    
+    config.currentLevel = go.get_id()
+
+    self.currentLevelData = nil
+    
+    self.blockTile = {type = -1, IDTile = -1, IDObject = nil} -- штука для детектирования СПЕЦ ячеек, то есть когда мы тыкаем на тайл с чем-то блокирующим, это заносится сюда
+
+    loadCurrentMap(self)
+    
+end
+
+function final(self)
+   
+end
+
+function set_focus(self, value)
+	if value then
+		msg.post("#", "acquire_input_focus")
+		msg.post("gameplay", "show")
+		
+		msg.post(self.heroID , "unpause")
+	else
+		msg.post("#", "release_input_focus")
+		msg.post("gameplay", "hide")
+		
+		msg.post(self.heroID , "pause")
+	end
+end
+
+function freeLevel(self)
+	local i = 1
+	while (i <= #self.currentLevelData.tiles) do	-- перебираем все тайлы
+		if self.currentLevelData.tiles[i].id ~= -1 then
+			go.delete(self.currentLevelData.tiles[i].id)
+			self.currentLevelData.tiles[i].id = -1
+			
+			for j = 1, #self.currentLevelData.tiles[i].objects do
+				go.delete(self.currentLevelData.tiles[i].objects[j].id)
+				self.currentLevelData.tiles[i].objects[j].id = -1
+			end
+			
+		end
+		i = i + 1
+	end
+	
+	self.first_render = true
+end
+
+function update(self, dt)
+
+	if self.update == false then
+		return
+	end
+	
+	local camPos = go.get_position("/camera")
+	local varPos = vmath.vector3()
+	
+	local i = 1
+	while (i <= #self.currentLevelData.tiles) do	-- перебираем все тайлы
+		
+		varPos.x = camPos.x - self.currentLevelData.tiles[i].position.x;
+		varPos.y = camPos.y - self.currentLevelData.tiles[i].position.y;
+		
+		--local lng = vmath.length(varPos)
+		--local distance = config.width * (config.getRatio()) * config.map_distance * 0.7
+		--if lng < distance then
+		
+		if config.inScreen(varPos.x, varPos.y) then		-- если попадаем в область экрана
+		
+			if self.currentLevelData.tiles[i].id == -1 then			-- если тайл несуществует, то создаем его
+		
+				local tile_factory_name = factories.get_tile_factory( self.currentLevelData.tiles[i].frame )
+				-- "/factories#tilesFactory"
+				local id = factory.create("/factories#"..tile_factory_name, self.currentLevelData.tiles[i].position, 
+						nil, {tileID = self.currentLevelData.tiles[i].tid, frame = self.currentLevelData.tiles[i].frame,
+						opened = self.currentLevelData.tiles[i].opened})
+				self.currentLevelData.tiles[i].id = id
+				
+				for j = 1, #self.currentLevelData.tiles[i].objects do	-- заодно создаем все объекты, которые привязаны к тайлу
+					local factory_name = factories.get_object_factory(self.currentLevelData.tiles[i].objects[j].type)
+					
+					id = factory.create("/factories#"..factory_name, 
+							self.currentLevelData.tiles[i].objects[j].position, nil, {idTile = self.currentLevelData.tiles[i].tid, 
+							opened = self.currentLevelData.tiles[i].opened, type = self.currentLevelData.tiles[i].objects[j].type, 
+							reflection = self.currentLevelData.tiles[i].objects[j].reflection})
+					
+					-- для выделялки красной
+					if self.currentLevelData.tiles[i].objects[j].type >= 50 and self.currentLevelData.tiles[i].objects[j].type < 100 then
+						msg.post(self.currentLevelData.tiles[i].id, "blocked", {type = 1})
+					end
+					
+					self.currentLevelData.tiles[i].objects[j].id = id
+					
+				end
+			end
+			
+			if self.currentLevelData.tiles[i].opened == false then 	-- если тайл закрыт, то можно попробовать открыть его
+				
+				--if lng < distance * 0.4 then
+				if config.inScreen(varPos.x, varPos.y, 0.4) then	-- попадает ли он "область видимости" 
+					local msg_text = self.first_render and "open_fast" or "open"
+
+					msg.post(self.currentLevelData.tiles[i].id, msg_text)			-- говорим тайлу открытыться
+					self.currentLevelData.tiles[i].opened = true
+					
+					for j = 1, #self.currentLevelData.tiles[i].objects do			-- заодно и объекты открываем
+						msg.post(self.currentLevelData.tiles[i].objects[j].id, msg_text)
+					end
+					
+				end -- if inScreen
+				
+			end -- if opened
+			
+			
+		else -- если не попадаем в область экран
+			if self.currentLevelData.tiles[i].id ~= -1 then 	-- то удалляем, если существуем 
+				go.delete(self.currentLevelData.tiles[i].id)
+				self.currentLevelData.tiles[i].id = -1
+				
+				for j = 1, #self.currentLevelData.tiles[i].objects do
+					go.delete(self.currentLevelData.tiles[i].objects[j].id)
+					self.currentLevelData.tiles[i].objects[j].id = -1
+				end
+				
+			end
+		end -- else
+		
+		i = i + 1
+		
+	end -- while
+	
+	self.first_render = false
+	
+end
+
+	local function get_objects_at(self, ind)
+		ind = ind or 1
+		for i = 1, #self.currentLevelData.tiles do
+	    	if self.currentLevelData.tiles[i].tid == self.blockTile.IDTile then
+	    		return self.currentLevelData.tiles[i].objects[ind], i, self.currentLevelData.tiles[i].id
+	    	end
+	    end
+	end
+
+function on_message(self, message_id, message, sender)
+	if message_id == hash("pospos") then 
+		print(sender)
+	
+	elseif message_id == hash("tap_tile") then -- палец приземлился на тайл
+	
+		--print("..............", self.blockTile.type)
+		
+		self.blockTile.type = -1
+    	self.blockTile.IDTile = -1
+    	self.blockTile.IDObject = nil
+
+		local node = findNodeFromTile(self, message.tid)
+		
+		--print("self.blockTile.type", self.blockTile.type)
+
+		if node ~= nil then
+			msg.post(message.id, "select")
+			
+			local path
+			if self.currentLevelData.heroStart ~= message.tid then
+				path = findPath(self, self.currentLevelData.heroStart, message.tid)
+			else
+				path = nil
+			end
+			
+			local blockTileId = nil
+			if self.blockTile.IDTile ~= -1 then
+				blockTileId = utils.positionXFromTileID(self.blockTile.IDTile, self.currentLevelData.width, self.currentLevelData.heigth)
+			end
+			
+			if path ~= nil then
+				self.hero_go = true
+	    		msg.post(self.heroID, "goto", {path = path, id = message.tid, block = blockTileId})
+			else
+				if blockTileId ~= nil then
+    				msg.post(self.heroID, "change_direction", {x = blockTileId})
+    			end
+			end
+
+    		
+		end
+
+    elseif message_id == hash("to_objects") then -- пересылка сообщениния всем объектам конкретного тайла
+   
+    	for i = 1, #self.currentLevelData.tiles do
+    		if self.currentLevelData.tiles[i].tid == message.id then
+    		
+    			local j, lng = 1, #self.currentLevelData.tiles[i].objects
+    		
+    			while j <= lng do
+    				msg.post(self.currentLevelData.tiles[i].objects[j].id, message.message_id, message)
+    				j = j + 1
+    			end
+    			break
+    		end
+    	end
+    	
+    elseif message_id == hash("hero_start") then 	-- мы НАСТУПИЛИ на новый тайл и надо изменить стартовую точку
+    	self.currentLevelData.heroStart = message.id
+    	
+    elseif message_id == hash("hero_go") then		-- двигаем камеру за героем
+    	setCameraPosition(message.x, message.y )
+    	
+    elseif message_id == hash("hero_stop") then		-- герой остановился
+    	
+    	if self.blockTile.type ~= -1 then
+			blockCellActivate(self)
+		end
+		self.hero_go = false
+    	
+    elseif message_id == hash("block_node") then
+    	local node = findNodeFromTile(self, message.idTile)
+    	if node ~= nil then
+    		node.block = message.type
+    		node.blockID = message.id
+    	end
+    
+    elseif message_id == hash("after_battle") then
+		
+	   	setCameraPositionFromTileID(self, self.currentLevelData.heroStart, "set_up")
+		local pos = utils.positionFromTileID(self.currentLevelData.heroStart, self.currentLevelData.width, self.currentLevelData.heigth, 
+								config.tileWidth, config.tileOffsetY)
+								
+		self.heroID = factory.create("/factories#heroFactory_mini", pos)
+		config.heroID = self.heroID
+	   	self.update = true
+
+		config.vignette_effect = 1
+		
+		if message.who_win ~= 2 then
+			getTimer(0.6, function()
+				--msg.post("#", "to_objects", {id = message.IDTile, message_id = "dead"})
+				local obj, tid, idd = get_objects_at(self)
+				
+				msg.post(idd, "unblocked")
+				
+				--print("test", obj, tid)
+				msg.post(obj.id, "dead")
+				table.remove(self.currentLevelData.tiles[tid].objects, 1)
+				local node = findNodeFromTile(self, message.IDTile)
+				if node ~= nil then
+		    		node.block = -1
+		    	end
+			end)
+		end
+		
+		print("WIN:", message.who_win)
+		if message.who_win ~= 1 then
+			self.hero_dead = true
+		end
+		
+		if message.who_win == 1 then
+			getTimer(1.6, function()
+				--msg.post("#", "acquire_input_focus")
+				set_focus(self, true)
+			end)
+		else
+			getTimer(0.6, function()
+				msg.post(self.heroID, "dead")
+			end)
+
+			getTimer(1.7, function()
+				msg.post("game_over", "show") -- ui#
+			end)
+			
+		--	self.hero_reflection = false
+		end
+		
+	elseif message_id == hash("reload_current_level") then
+		getTimer(0.5, function()
+			msg.post("main:/prebattle", "show")  --ui#
+		end)
+		
+		getTimer(1.6, function()
+			-- удаляем все со сцены, отключаем генерацию карты
+			freeLevel(self)
+			
+			if self.heroID ~= nil then
+		   		go.delete(self.heroID)
+		   		self.heroID = nil
+		   		config.heroID = self.heroID
+		   	end
+		   	
+		   	loadCurrentMap(self, true)
+		   	
+		   	--msg.post("#", "acquire_input_focus")
+		   	set_focus(self, true)
+
+		   	-- скрываем черную херню
+			msg.post("main:/prebattle", "hide") -- ui#
+		end)
+		
+	elseif message_id == hash("dialog_hide") then
+	
+		local input_time = message.input_time or 0.01
+		local acquire_input = message.acquire_input
+		
+		getTimer(input_time, function()
+			if acquire_input then
+				--msg.post("#", "acquire_input_focus")
+				set_focus(self, true)
+			end
+		end)
+		
+		config.zoom = 1.0
+
+		if message.IDTile ~= -1 then
+			msg.post(self.heroID, "talk_end")
+			local obj = get_objects_at(self)
+		    msg.post(obj.id, "talk_end")
+			if message.hold then
+				obj.dialog = message.hold
+			end
+			
+			--msg.post("gameplay", "show")
+		end
+
+	    
+	    
+	elseif message_id == hash("dialog_msg") then
+		for i = 1, #message.msg do
+			if message.msg[i]:sub(1, 1) == "@" then
+			    msg.post(get_objects_at(self).id, "request", {value = message.msg[i]:sub(2, #message.msg[i])})
+			else
+				msg.post(self.heroID, "request", {value = message.msg[i]})
+			end
+		end
+		
+	elseif message_id == hash("dialog_fight") then
+		begin_fight(self)
+		
+	elseif message_id == hash("dialog_goto_menu") then
+		set_focus(self, false)
+		msg.post("main:/main#script", "go_menu")
+		
+	elseif message_id == hash("dialog_unblock") then
+		local obj, tid, idd = get_objects_at(self)
+		msg.post(idd, "unblocked")
+		table.remove(self.currentLevelData.tiles[tid].objects, 1)
+		local node = findNodeFromTile(self, message.IDTile)
+		if node ~= nil then
+    		node.block = -1
+    	end
+    	
+    elseif message_id == hash("dialog_dead") then
+    
+		self.hero_dead = true
+    	
+		getTimer(0.6, function()
+			set_focus(self, false)
+			msg.post(self.heroID, "dead")
+		end)
+		
+		getTimer(1.7, function()
+			msg.post("game_over", "show") -- ui#
+		end)
+    	
+    --elseif message_id == hash("show_equipment") then
+    --	set_focus(self, false)
+    --	msg.post("equipment", "show")
+    
+    elseif message_id == hash("hide_popup") then
+    	set_focus(self, true)	
+    	
+     elseif message_id == hash("show_def_dialog") then
+     	if self.hero_dead then
+     		return
+     	end
+    	msg.post("dialogs", "show", {dialog = message.dialog, IDTile = -1}) -- ui#
+    	set_focus(self, false)	
+    	
+    end
+end
+
+
+function on_input(self, action_id, action)
+
+	if action_id == nil then
+		return
+	end
+
+	if (action_id == hash("click_screen") or action_id == hash("tap_screen")) then
+		local sx = (action.screen_x - config.halfWidth) * config.getRatio()
+		local sy = (action.screen_y - config.halfHeight) * config.getRatio()
+		
+		if (action.pressed == false) then
+    		return
+    	end
+    	
+    	for i = #self.currentLevelData.tiles, 1,-1  do
+    		if self.currentLevelData.tiles[i].id ~= -1 then
+    			msg.post(self.currentLevelData.tiles[i].id, "tap_screen", {x = sx, y = sy, heroStart = self.currentLevelData.heroStart})
+    		end
+    	end
+    elseif (action_id == hash("test") and action.pressed == true) then	
+    --[[
+    	local cur = lvlManager.getCurrentLevel()
+    	if (cur == "Test2") then
+    		cur = "Test"
+    	else
+    		cur = "Test2"
+    	end
+    	lvlManager.setCurrentLevel(cur)
+    	freeLevel(self)
+    	loadCurrentMap(self)
+    --]]
+    	lvlManager.save_current(self.currentLevelData)
+    end
+    
+end
+
+function begin_fight(self)
+	--msg.post("gameplay", "hide")
+	msg.post(self.heroID, "fight_begin")
+	
+	msg.post("main:/main#script", "start_sound", {name = "battle_begin", gain = 0.05}) 
+		
+	getTimer(0.3, function()
+		msg.post(self.blockTile.IDObject, "fight_begin")
+	end)
+	
+	getTimer(0.5, function()
+		msg.post("main:/prebattle", "show") -- ui#
+	end)
+	
+	getTimer(1.6, function()
+		-- удаляем все со сцены, отключаем генерацию карты
+		freeLevel(self)
+		
+		if self.heroID ~= nil then
+	   		go.delete(self.heroID)
+	   		self.heroID = nil
+	   		config.heroID = self.heroID
+	   	end
+	   	--self.heroID = -1
+	   --	msg.post(self.heroID, "disabled")
+	   	self.update = false
+	   	
+	   	-- скрываем черную хеню
+		msg.post("main:/prebattle", "hide") -- ui#
+		
+		local enemy_life = 1
+		if self.blockTile.type == 50 then
+			enemy_life = 5
+		elseif self.blockTile.type == 51 then
+			enemy_life = 7
+		elseif self.blockTile.type == 52 then
+			enemy_life = 4
+		end
+				
+		msg.post("battle", "show", {user_life = 4, enemy_life = enemy_life, IDTile = self.blockTile.IDTile, enemy_type = self.blockTile.type})
+		
+		setCameraPosition(0, 0, "set_up") 
+		config.vignette_effect = 0
+		
+	end)
+end
+
+function blockCellActivate(self)
+	 
+	print("ACTIVATE")
+	--msg.post("#", "release_input_focus")
+	set_focus(self, false)
+	
+	config.zoom = 0.9
+	
+	local dlg
+	
+	for i = 1, #self.currentLevelData.tiles do
+    	if self.currentLevelData.tiles[i].tid == self.blockTile.IDTile then
+    		dlg = self.currentLevelData.tiles[i].objects[1].dialog
+    		local new_dlg = lvlManager.findSwiper(dlg)
+    		
+    		if type(dlg) == "string" then
+    			self.hero_reflection = self.currentLevelData.tiles[i].objects[1].reflection
+    		end
+    		
+    		print(self.hero_reflection)
+    		
+    		if new_dlg then
+    			self.currentLevelData.tiles[i].objects[1].dialog = new_dlg
+    		
+    			dlg = new_dlg
+    		end
+    		
+    		break
+    	end
+    end
+    
+	if type(dlg) == "string" then  --- ПЕРЕХОД МЕЖДУ УРОВНЯМИ
+		self.update = false
+		
+		msg.post(self.blockTile.IDObject, "stop_particles")
+		
+		lvlManager.save_current(self.currentLevelData)	
+		
+		getTimer(0.1, function()
+			msg.post("main:/prebattle", "show") -- ui#
+		end)
+		
+		getTimer(1.2, function()
+		
+			lvlManager.setCurrentLevel(dlg)
+    		freeLevel(self)
+    		
+    		if self.heroID ~= nil then
+		   		go.delete(self.heroID)
+		   		self.heroID = nil
+		   		config.heroID = self.heroID
+		   	end
+    		
+    		getTimer(0.8, function()
+	    		msg.post("main:/prebattle", "hide") -- ui#
+	    		self.update = true
+	    		loadCurrentMap(self)
+	    		set_focus(self, true)
+	    		lvlManager.save_current(self.currentLevelData)
+	    	end)
+		end)
+    	
+	else
+		msg.post("dialogs", "show", {dialog = dlg, IDTile = self.blockTile.IDTile}) -- ui#
+		msg.post(self.heroID, "talk_begin",  {id = self.blockTile.IDObject})
+	end
+    
+end
+
+function getTimer(value, cb)
+	go.animate("#", "time", go.PLAYBACK_ONCE_FORWARD, 1, go.EASING_LINEAR, 0, value, cb)
+end

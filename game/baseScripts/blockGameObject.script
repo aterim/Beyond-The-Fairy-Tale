@@ -1,0 +1,15 @@
+local config = require "main.config.config"
+
+go.property("type", 0)
+go.property("idTile", 0)
+
+
+-- 0 - ничего
+-- 1 - враги
+
+
+function init(self)
+    if self.type ~= 0 and self.idTile >= 0 then
+    	msg.post(config.currentLevel, "block_node", {idTile = self.idTile, type = self.type, id = go.get_id()})
+    end
+end

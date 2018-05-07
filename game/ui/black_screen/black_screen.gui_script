@@ -1,0 +1,63 @@
+local config = require "main.config.config"
+local utils = require "utils.utils"
+
+local COUNT = 83
+
+function init(self)
+	msg.post("#", "disable")
+	
+	self.nodes = {}
+	
+	self.hide_vector = vmath.vector3(0,0,0)
+	self.show_vector = vmath.vector3(1.1,1.1,1)
+	
+	for i = 0, COUNT do
+		table.insert(self.nodes, gui.get_node("box"..tostring(i)))
+		
+		gui.set_scale(self.nodes[i+1], self.hide_vector)
+	end
+
+	self.container = gui.get_node("container")
+	utils.re_position(self.container)
+	
+	self.icon = gui.get_node("icon")
+	
+	gui.set_render_order(15)
+	
+	self.isShow = false
+end
+
+function update(self)
+	
+end
+
+
+function on_message(self, message_id, message, sender)
+    if message_id == hash("show") then
+    	msg.post("#", "enable")
+    	
+    	self.isShow = true
+    	
+    	gui.set_color(self.icon, vmath.vector4(1,1,1,0))
+    	gui.animate(self.icon, gui.PROP_COLOR, vmath.vector4(1,1,1,1), gui.EASING_LINEAR, 0.2, COUNT * 0.7 * 0.01)
+    	
+    	for i = 0, COUNT do
+			gui.animate(self.nodes[i+1], gui.PROP_SCALE, self.show_vector, gui.EASING_LINEAR, 0.2, i * 0.01)
+		end
+	elseif message_id == hash("hide") then
+		
+		if self.isShow == false then
+			return
+		end
+	
+    	for i = 0, COUNT-1 do
+			gui.animate(self.nodes[i+1], gui.PROP_SCALE, self.hide_vector, gui.EASING_LINEAR, 0.2, 0.1 + i * 0.01)
+		end
+		
+		gui.animate(self.nodes[COUNT+1], gui.PROP_SCALE, self.hide_vector, gui.EASING_LINEAR, 0.2, 0.1 + COUNT*0.01, function()
+			msg.post("#", "disable")
+		end)
+		
+		gui.animate(self.icon, gui.PROP_COLOR, vmath.vector4(1,1,1,0), gui.EASING_LINEAR, 0.2, COUNT * 0.4 * 0.01)
+    end
+end

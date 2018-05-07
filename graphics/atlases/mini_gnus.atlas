@@ -1,0 +1,138 @@
+images {
+  image: "/graphics/objects/mini_characters/gnus/arm_l_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/arm_l_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/arm_l_c.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/arm_l_d.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/arm_r_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/arm_r_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/arm_r_c.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/arm_r_d.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/body_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/body_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/body_c.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/body_d.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/cornicle_l_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/cornicle_l_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/cornicle_l_c.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/cornicle_l_d.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/cornicle_r_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/cornicle_r_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/cornicle_r_c.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/cornicle_r_d.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/drop_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/drop_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/face.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/jaw_l_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/jaw_l_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/jaw_l_c.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/jaw_r_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/jaw_r_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/jaw_r_c.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/leg_l_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/leg_l_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/leg_l_c.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/leg_r_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/leg_r_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/leg_r_c.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/nose.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/shadow.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/slime_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/slime_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/slime_c.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/slime_d.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/slime_e.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/torso.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/wing_l_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/gnus/wing_l_b.png"
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0

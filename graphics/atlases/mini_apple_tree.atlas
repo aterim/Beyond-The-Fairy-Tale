@@ -1,0 +1,111 @@
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/apple_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/apple_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/apple_c.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/apple_d.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/apple_e.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/apple_f.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/body_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/body_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/brow_l.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/brow_r.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/earring.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/eye_l.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/eye_r.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/face.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/jaw_d.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/lip_d.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/lip_u.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/main.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/roots.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/teeth_d.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/teeth_u.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/throat.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/twig_dc_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/twig_dc_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/twig_dl.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/twig_l.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/twig_ld.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/twig_lu_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/twig_lu_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/twig_rc_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/twig_rc_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/twig_rc_c.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/twig_uc_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/twig_uc_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/twig_uc_c.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/apple_tree/twig_ul.png"
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0

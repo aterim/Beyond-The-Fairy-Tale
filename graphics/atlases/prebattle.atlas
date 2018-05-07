@@ -1,0 +1,15 @@
+images {
+  image: "/graphics/other/blackSquade.png"
+}
+images {
+  image: "/graphics/ui/black_screen/prebattle_icon.png"
+}
+images {
+  image: "/graphics/ui/black_screen/black_hex.png"
+}
+images {
+  image: "/graphics/ui/black_screen/loading.png"
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0

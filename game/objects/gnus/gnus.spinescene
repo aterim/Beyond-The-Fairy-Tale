@@ -1,0 +1,3 @@
+spine_json: "/game/objects/gnus/gnat.json"
+atlas: "/graphics/atlases/gnus.atlas"
+sample_rate: 45.0

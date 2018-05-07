@@ -1,0 +1,234 @@
+images {
+  image: "/graphics/objects/mini_characters/wolf/body.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/body_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/brow_l.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/brow_l_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/brow_r.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/brow_r_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/collar.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/collar_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/crus_l.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/crus_l_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/crus_r.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/crus_r_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/ear_l.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/ear_l_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/ear_r.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/ear_r_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/ear_ul.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/ear_ul_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/ear_ur.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/ear_ur_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/eye.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/eye_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/face_bad.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/face_bad_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/fingers_bl.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/fingers_bl_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/fingers_br.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/fingers_br_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/fingers_fl.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/fingers_fl_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/fingers_fr.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/fingers_fr_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/foot_l.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/foot_l_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/foot_r.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/foot_r_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/forearm_l.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/forearm_l_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/forearm_r.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/forearm_r_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/hair_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/hair_a_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/hair_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/hair_b_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/hair_c.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/hair_c_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/hand_l.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/hand_l_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/hand_r.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/hand_r_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/jaw.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/jaw_good.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/jaw_good_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/jaw_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/nose_good.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/nose_good_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/pupil.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/pupil_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/shadow.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/tail_a.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/tail_a_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/tail_b.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/tail_b_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/tail_c.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/tail_c_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/tail_d.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/tail_d_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/thigh_l.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/thigh_l_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/thigh_r.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/thigh_r_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/tooth_r.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/tooth_r_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/upperarm_l.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/upperarm_l_old.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/upperarm_r.png"
+}
+images {
+  image: "/graphics/objects/mini_characters/wolf/upperarm_r_old.png"
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0

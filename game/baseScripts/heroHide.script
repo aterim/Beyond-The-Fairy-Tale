@@ -1,0 +1,47 @@
+local config = require "main.config.config"
+
+
+
+function init(self)
+    self.maxLength = 600 * config.ratio --370 * config.getRatio()
+    self.alpha = false
+end
+
+function update(self, dt)
+
+	--[[
+
+    local pos = go.get_position()
+    local camera = go.get_position("/camera")
+    
+    local noalpha = true
+    
+    --print(pos.y , config.heroY , math.abs(pos.y - config.heroY) > 50)
+    local hx = config.heroX * config.ratio
+    local hy = config.heroY * config.ratio
+    
+    if pos.y < camera.y and math.abs(pos.y - camera.y) > 50* config.ratio then
+    
+    	pos.x = pos.x - camera.x
+    	pos.y = pos.y - camera.y
+    	
+    	local lng = vmath.length(pos) 
+
+		--print(lng, self.maxLength)
+
+    	if lng < self.maxLength then
+    		noalpha = false
+    		if self.alpha == false then
+    			go.animate("#spinemodel", "tint.w", go.PLAYBACK_ONCE_FORWARD, 0.3, go.EASING_INOUTSINE, 0.1)
+    			self.alpha = true
+    		end
+    	end
+    end
+    
+    if noalpha and self.alpha then
+    	go.animate("#spinemodel", "tint.w", go.PLAYBACK_ONCE_FORWARD, 1, go.EASING_INOUTSINE, 0.1)
+    	self.alpha = false
+    end
+   --]]
+end
+

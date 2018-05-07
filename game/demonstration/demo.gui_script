@@ -1,0 +1,55 @@
+local config = require "main.config.config"
+
+require "utils.local_timer"
+local loc_timer
+
+
+function init(self)
+    self.text = gui.get_node("text")
+	self.bg = gui.get_node("bg")
+	local scale = 1/config.ratio * config.ratio_max 
+    gui.set_scale(self.bg, vmath.vector3(scale,scale,scale))
+    
+    gui.set_text(self.text, "This is an early build. Thus, some functions may be absent or may work not quite well. Hopefully, this won't prevent you from getting pleasure from this demo.")
+    
+    local color = vmath.vector4(1, 1, 1, 0)
+    gui.set_color(self.text, color)
+	color.w = 1
+	gui.animate(self.text, gui.PROP_COLOR, color, gui.EASING_OUTCIRC, 0.2, 0.8)
+    
+    loc_timer = LTimer:new()
+    
+    loc_timer:get_timeout(6, function()
+		color.w = 0
+		gui.animate(self.text, gui.PROP_COLOR, color, gui.EASING_OUTCIRC, 0.2, 1.1)
+	end)
+	
+	loc_timer:get_timeout(7.5, function()
+		msg.post("main:/main#script", "begin_game") 
+	end)
+end
+
+function final(self)
+    loc_timer = nil
+end
+
+function update(self, dt)
+    if loc_timer then
+		loc_timer:update_dt(dt)
+	end
+end
+
+function on_message(self, message_id, message, sender)
+    -- Add message-handling code here
+    -- Remove this function if not needed
+end
+
+function on_input(self, action_id, action)
+    -- Add input-handling code here
+    -- Remove this function if not needed
+end
+
+function on_reload(self)
+    -- Add input-handling code here
+    -- Remove this function if not needed
+end

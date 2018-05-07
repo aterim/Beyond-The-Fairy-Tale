@@ -1,0 +1,216 @@
+images {
+  image: "/graphics/objects/hero_part/beard.png"
+}
+images {
+  image: "/graphics/objects/hero_part/beard_back.png"
+}
+images {
+  image: "/graphics/objects/hero_part/chest.png"
+}
+images {
+  image: "/graphics/objects/hero_part/cloak.png"
+}
+images {
+  image: "/graphics/objects/hero_part/cloak_back.png"
+}
+images {
+  image: "/graphics/objects/hero_part/crus_l.png"
+}
+images {
+  image: "/graphics/objects/hero_part/crus_r.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eye_l.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eye_l_cheerful.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eye_l_closed.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eye_l_glad.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eye_l_half.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eye_r.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eye_r_cheerful.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eye_r_closed.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eye_r_glad.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eye_r_half.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eyebrow_l.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eyebrow_l_angry.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eyebrow_l_fear.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eyebrow_l_hate.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eyebrow_l_surprise.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eyebrow_r.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eyebrow_r_angry.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eyebrow_r_fear.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eyebrow_r_hate.png"
+}
+images {
+  image: "/graphics/objects/hero_part/eyebrow_r_surprise.png"
+}
+images {
+  image: "/graphics/objects/hero_part/face.png"
+}
+images {
+  image: "/graphics/objects/hero_part/fist_l.png"
+}
+images {
+  image: "/graphics/objects/hero_part/fist_r_sword.png"
+}
+images {
+  image: "/graphics/objects/hero_part/forearm_l.png"
+}
+images {
+  image: "/graphics/objects/hero_part/forearm_r.png"
+}
+images {
+  image: "/graphics/objects/hero_part/forearm_r_hanging.png"
+}
+images {
+  image: "/graphics/objects/hero_part/hair_back.png"
+}
+images {
+  image: "/graphics/objects/hero_part/hair_bang.png"
+}
+images {
+  image: "/graphics/objects/hero_part/hair_crown.png"
+}
+images {
+  image: "/graphics/objects/hero_part/hair_front.png"
+}
+images {
+  image: "/graphics/objects/hero_part/hair_temple.png"
+}
+images {
+  image: "/graphics/objects/hero_part/hand_r_finger.png"
+}
+images {
+  image: "/graphics/objects/hero_part/hand_r_fist.png"
+}
+images {
+  image: "/graphics/objects/hero_part/hand_r_fist_alt.png"
+}
+images {
+  image: "/graphics/objects/hero_part/hand_r_palm.png"
+}
+images {
+  image: "/graphics/objects/hero_part/mouth_angry.png"
+}
+images {
+  image: "/graphics/objects/hero_part/mouth_glad.png"
+}
+images {
+  image: "/graphics/objects/hero_part/mouth_glad_side.png"
+}
+images {
+  image: "/graphics/objects/hero_part/mouth_ok.png"
+}
+images {
+  image: "/graphics/objects/hero_part/mouth_pouted.png"
+}
+images {
+  image: "/graphics/objects/hero_part/mouth_s_a.png"
+}
+images {
+  image: "/graphics/objects/hero_part/mouth_s_f.png"
+}
+images {
+  image: "/graphics/objects/hero_part/mouth_s_i.png"
+}
+images {
+  image: "/graphics/objects/hero_part/mouth_s_m.png"
+}
+images {
+  image: "/graphics/objects/hero_part/mouth_s_o.png"
+}
+images {
+  image: "/graphics/objects/hero_part/mouth_s_pb.png"
+}
+images {
+  image: "/graphics/objects/hero_part/mouth_s_u.png"
+}
+images {
+  image: "/graphics/objects/hero_part/mouth_sad.png"
+}
+images {
+  image: "/graphics/objects/hero_part/mouth_scream_a.png"
+}
+images {
+  image: "/graphics/objects/hero_part/mouth_scream_b.png"
+}
+images {
+  image: "/graphics/objects/hero_part/mouth_smile.png"
+}
+images {
+  image: "/graphics/objects/hero_part/neck.png"
+}
+images {
+  image: "/graphics/objects/hero_part/nose.png"
+}
+images {
+  image: "/graphics/objects/hero_part/palm_l.png"
+}
+images {
+  image: "/graphics/objects/hero_part/shadow.png"
+}
+images {
+  image: "/graphics/objects/hero_part/shirt.png"
+}
+images {
+  image: "/graphics/objects/hero_part/shirt_back.png"
+}
+images {
+  image: "/graphics/objects/hero_part/shoulder_l.png"
+}
+images {
+  image: "/graphics/objects/hero_part/sword.png"
+}
+images {
+  image: "/graphics/objects/hero_part/sword_copy.png"
+}
+images {
+  image: "/graphics/objects/hero_part/thigh_l.png"
+}
+images {
+  image: "/graphics/objects/hero_part/thigh_r.png"
+}
+images {
+  image: "/graphics/objects/hero_part/upperarm_l.png"
+}
+images {
+  image: "/graphics/objects/hero_part/upperarm_r.png"
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0

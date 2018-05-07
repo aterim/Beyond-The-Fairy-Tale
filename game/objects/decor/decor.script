@@ -1,0 +1,78 @@
+local config = require "main.config.config"
+
+
+go.property("opened", false)
+
+local WIDTH = {102, 84, 41, 50, 49, 69, 80, 71, 83, 85, 107, 82, 89, 44, 71, 261, 205, 115, 186, 120, 78, 187, 251, 185,
+				134, 185, 100, 136, 242, 138, 38, 31, 46, 32, 62, 71, 132, 148, 185, 64, 39, 197, 153, 178, 226, 169, 
+				163, 197, 91, 105, 159, 117, 112, 178, 119, 126, 82, 149, 66}
+
+go.property("type", 1)
+
+	local function create_name(int, count_zero)
+		local str = tostring(int)
+		count_zero = count_zero - #str
+		for i = 1, count_zero do
+			str = "0"..str
+		end
+		
+		return str
+	end
+
+function init(self)
+
+	loc_timer = LTimer:new()
+
+    if self.opened == false then
+    	msg.post(".", "disable")
+    end
+	self.myScale = 1.0
+		
+	msg.post("#sprite", "play_animation", { id = hash( "decor_"..create_name(self.type - 99, 4) ) })
+	
+	
+	local pos = go.get(".", "position.y")
+	pos = pos + WIDTH[self.type - 99] * 0.5
+	go.set(".", "position.y", pos)
+end
+
+function final(self)
+    -- Add finalization code here
+    -- Remove this function if not needed
+end
+
+function update(self, dt)
+	--print("decor", go.get(".", "position.z"))
+end
+
+function on_message(self, message_id, message, sender)
+    if message_id == hash("open") then
+    	self.opened = true
+    	
+    	--if math.random() < 0.4 then
+    	msg.post(".", "enable")
+    	
+		go.set_scale(0.001)
+		
+		local pos = go.get_position(".")
+		local dy = 150
+		local dt_fall = 0.3
+		local dt_scale = 0.3
+		
+		pos.y = pos.y - dy
+		go.set_position(pos)
+
+		go.animate(".", "scale", go.PLAYBACK_ONCE_FORWARD, self.myScale, go.EASING_OUTSINE, dt_scale)
+
+		go.animate(".", "position.y", go.PLAYBACK_ONCE_FORWARD, pos.y + dy, go.EASING_OUTSINE, dt_fall)
+		
+	elseif message_id == hash("open_fast") then
+		self.opened = true
+    	msg.post(".", "enable")	
+	
+	elseif message_id == hash("up_tile") then
+		local yy = go.get_world_position().y
+		go.animate(".", "position.y", go.PLAYBACK_ONCE_PINGPONG, yy + 15, go.EASING_INCUBIC, 0.3)
+    end
+end
+

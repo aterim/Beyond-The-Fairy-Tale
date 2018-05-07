@@ -1,0 +1,1044 @@
+local utils = require "utils.utils"
+local config = require "main.config.config"
+
+local battle_dictionary = require "game.ui.battle.battle_dictionary"
+local lvlManager = require "game.baseScripts.levelsManager"
+
+require "utils.local_timer"
+local loc_timer -- = LTimer:new()
+
+
+local SCALE_MINI = 0.5
+local SCALE_USER = 0.6
+local SCALE_PREVIEW = 1.2
+
+
+local function solve_user_card_orientation(self, order, x, y)
+
+	local ret = {x = x, y = y, angle = 0, scale = 1}
+			
+	if order == -1 then
+		local dir = self.round == 0 and 0 or (math.random() < 0.5 and 1 or -1)
+	
+		ret.angle = -6 + (4 + math.random()*4) * dir
+		ret.x = x
+		ret.y = y
+		ret.scale = SCALE_MINI
+		
+		return ret
+	end
+	
+	local offsetX = 100
+	
+	if config.countCardsInHand % 2 == 0 then
+		local half = self.cards_in_hand / 2 - order
+		half = (half <= 0) and half - 1 or half
+		
+		ret.x = ret.x + offsetX * half - (offsetX * 0.5 * (half > 0 and 1 or -1))
+    	ret.angle = (math.abs(half) == 1) and half * (-3) or half * (-6)
+    	ret.y = ret.y - math.abs(half) * 15
+	else
+		local half = self.cards_in_hand / 2 - order + 0.5 - 1
+	    	
+    	ret.x = ret.x + offsetX * half
+    	ret.angle = half * (-6)
+    	ret.y = ret.y - math.abs(half) * 15
+	end
+	
+	ret.x = ret.x
+	ret.scale = SCALE_USER
+	
+	return ret
+end
+
+	local function set_card_values(node, attack, defence)
+		local k = 0
+		
+		for i = 0, attack-1 do
+			gui.set_enabled(node["card/val"..tostring(k)], true)
+			gui.play_flipbook(node["card/val"..tostring(k)], "card_mini_icon_attack")
+			k = k + 1
+		end		
+	
+		for i = 0, defence-1 do
+			gui.set_enabled(node["card/val"..tostring(k)], true)
+			gui.play_flipbook(node["card/val"..tostring(k)], "card_mini_icon_shield")
+			k = k + 1
+		end		
+	
+
+		for i = k, 3 do	
+			gui.set_enabled(node["card/val"..tostring(i)], false)
+		end	
+		
+	end
+
+local function add_card(self, order, begin_pos, not_for_stack, card_template, begin_param)
+	local card = gui.clone_tree(self.card_mockup)
+	add_to_stack = true
+	
+	gui.set_position(card["card/body"], begin_pos)
+	card.template = card_template
+	
+	--card.boost = card_template.boost
+	gui.play_flipbook(card["card/icon"], card_template.icon)
+	
+	local lang = config.language
+	
+	gui.set_text(card["card/caption"], card_template.name[lang])
+	gui.set_text(card["card/description"], card_template.description[lang])
+	
+	if card_template.name[lang] == "Hide-and-seek behind branches" then
+		gui.set_scale(card["card/caption"], vmath.vector3(0.8, 0.8, 0.8))
+	end
+	
+	gui.set_color(card["card/description"], vmath.vector4(1, 1, 1, 0))
+	--gui.set_color(card["card/value"], vmath.vector4(1, 1, 1, 0))
+	gui.set_scale(card["card/value"], vmath.vector3(0.8, 0.8, 0.8))
+
+	card.attack = card_template.attack
+	card.defence = card_template.defence
+	
+	set_card_values(card, card.template.attack, card.template.defence)
+	
+	if card_template.boost then
+		card.life_time = card_template.life_time
+	end
+	
+	--msg.post(card["card"], "test")
+	gui.set_layer(card["card/body"], "l"..tostring(order))
+	--card.user = (order ~= -1)
+	
+	local alpha = 1
+	local scale = 1
+	local angle = 0
+	
+	if begin_param ~= nil then
+		alpha = begin_param.alpha == nil and 1 or begin_param.alpha
+		scale = begin_param.scale == nil and 1 or begin_param.scale
+		angle = begin_param.angle == nil and 0 or begin_param.angle
+		
+		card.index = begin_param.index
+		
+		if alpha ~= 1 then gui.set_color(card["card/body"], vmath.vector4(1, 1, 1, alpha)) end
+		if scale ~= 1 then gui.set_scale(card["card/body"], vmath.vector3(scale, scale, 1)) end
+		if angle ~= 0 then gui.set_rotation(card["card/body"], vmath.vector3(0, 0, angle)) end
+	end
+	
+	table.insert(card, {order = order, x = begin_pos.x, y = begin_pos.y, res_x = begin_pos.x, res_y = begin_pos.y, 
+						angle = angle, scale = scale, alpha = alpha, res_angle = angle, res_scale = scale, res_alpha = alpha,
+						preview = false, block = false})
+	if not_for_stack then
+		return card
+	else
+		if order == -1 then
+			table.insert(self.cards, card)
+		else
+			table.insert(self.cards, order + 1, card)
+		end
+	end
+	
+end
+
+
+local function set_card_parameters(self, node, param, safe_mode)
+
+	local card = node[1]
+	
+	if param.order ~= nil then 
+		card.order = param.order
+		gui.set_layer(node["card/body"], "l"..tostring(card.order)) 
+	end	
+	
+	if param.x ~= nil then card.x = param.x end	
+	if param.y ~= nil then card.y = param.y end	
+	if param.angle ~= nil then card.angle = param.angle end	
+	if param.scale ~= nil then card.scale = param.scale end	
+	if param.alpha ~= nil then card.alpha = param.alpha end	
+	--if param.life_time ~= nil then card.life_time = param.life_time end	
+	
+	if param.preview ~= nil then 
+		card.preview = param.preview 
+
+		if card.preview then
+			gui.set_layer(node["card/body"], "selected_card")
+			
+			gui.animate(node["card/description"], gui.PROP_COLOR, vmath.vector4(78/255, 62/255, 32/255, 1), gui.EASING_OUTCIRC, 0.2)
+			gui.animate(node["card/icon"], gui.PROP_COLOR, vmath.vector4(1, 1, 1, 0), gui.EASING_OUTCIRC, 0.2)
+			--gui.animate(node["card/value"], gui.PROP_COLOR, vmath.vector4(210/255, 178/255, 115/255, 1), gui.EASING_OUTCIRC, 0.2)
+			
+			--pprint(node.template.attack, node.template.defence)
+			set_card_values(node, node.template.attack, node.template.defence)
+		else
+			gui.set_layer(node["card/body"], "l"..tostring(card.order))	
+			
+			gui.animate(node["card/description"], gui.PROP_COLOR, vmath.vector4(78/255, 62/255, 32/255, 0), gui.EASING_OUTCIRC, 0.2)
+			gui.animate(node["card/icon"], gui.PROP_COLOR, vmath.vector4(1, 1, 1, 1), gui.EASING_OUTCIRC, 0.2)
+			--scale_def * config.ratio_max / config.ratiogui.animate(node["card/value"], gui.PROP_COLOR, vmath.vector4(210/255, 178/255, 115/255, 0), gui.EASING_OUTCIRC, 0.2)
+		end
+	end
+	
+	if param.block ~= nil then card.block = param.block end
+
+	if safe_mode then
+		if param.x ~= nil then card.res_x = param.x end	
+		if param.y ~= nil then card.res_y = param.y end	
+		if param.angle ~= nil then card.res_angle = param.angle end	
+		if param.scale ~= nil then card.res_scale = param.scale end	
+		if param.alpha ~= nil then card.res_alpha = param.alpha end	
+	end
+end
+
+
+local function reset_card_parameters(self, node, param)
+	local card = node[1]
+	
+	card.x = card.res_x
+	card.y = card.res_y
+	card.angle = card.res_angle
+	card.scale = card.res_scale
+	card.alpha = card.res_alpha
+	
+	if param ~= nil then
+		if param.preview ~= nil then 
+			card.preview = param.preview 
+			
+			if card.preview then
+				gui.set_layer(node["card/body"], "selected_card")
+				
+				gui.animate(node["card/description"], gui.PROP_COLOR, vmath.vector4(78/255, 62/255, 32/255, 1), gui.EASING_OUTCIRC, 0.2)
+				gui.animate(node["card/icon"], gui.PROP_COLOR, vmath.vector4(1, 1, 1, 0), gui.EASING_OUTCIRC, 0.2)
+				--gui.animate(node["card/value"], gui.PROP_COLOR, vmath.vector4(210/255, 178/255, 115/255, 1), gui.EASING_OUTCIRC, 0.2)
+				
+				set_card_values(node, node.template.attack, node.template.defence)
+			else
+				gui.set_layer(node["card/body"], "l"..tostring(card.order))	
+				
+				gui.animate(node["card/description"], gui.PROP_COLOR, vmath.vector4(78/255, 62/255, 32/255, 0), gui.EASING_OUTCIRC, 0.2)
+				gui.animate(node["card/icon"], gui.PROP_COLOR, vmath.vector4(1, 1, 1, 1), gui.EASING_OUTCIRC, 0.2)
+				--gui.animate(node["card/value"], gui.PROP_COLOR, vmath.vector4(210/255, 178/255, 115/255, 0), gui.EASING_OUTCIRC, 0.2)
+			end
+		end
+		if param.block ~= nil then card.block = param.block end
+	end
+end
+
+local function delete_card(card)
+	gui.delete_node(card["card/body"])
+
+	card[1] = nil
+end
+
+
+local function reset_scale(self)
+
+	utils.re_position(self.TOP, true)
+    utils.re_position(self.DOWN, true)
+--[[
+	local w_ratio = (config.defaultWidth / config.width)
+	local h_ratio = (config.defaultHeight / config.height)
+    
+    if w_ratio < h_ratio then
+    	local table_width = gui.get_size(self.DOWN).x
+    	local ww = table_width / w_ratio
+    
+	    local sc = config.width / table_width * h_ratio
+
+	    local dy = gui.get_size(self.DOWN).y * (sc - 1) * 0.5
+	    
+	    local pos = gui.get_position(self.DOWN)
+	    pos.y = pos.y - dy
+	    gui.set_position(self.DOWN, pos)
+	    
+	    pos = gui.get_position(self.TOP)
+	    pos.y = pos.y + dy
+	    gui.set_position(self.TOP, pos)
+	    
+	    gui.set_scale(self.DOWN, vmath.vector3(sc, sc, sc))
+	    gui.set_scale(self.TOP, vmath.vector3(sc, sc, sc))
+
+	else
+	
+    	utils.re_position(self.TOP, false)
+    	utils.re_position(self.DOWN, false)
+    end
+    --]]
+end
+
+
+local function open_user_boost(self)
+	gui.set_enabled(self.boost_icon_user, true)
+	gui.set_enabled(self.boost_new, true)
+	
+	local scale = vmath.vector3(0, 0, 1)
+	gui.set_scale(self.boost_icon_user, scale)
+	scale.x = 1
+	scale.y = 1
+	gui.animate(self.boost_icon_user, gui.PROP_SCALE, scale, gui.EASING_OUTSINE, 0.2)
+end
+
+local function hide_user_boost(self)
+	gui.set_enabled(self.boost_icon_user, true)
+	gui.set_enabled(self.boost_new, false)
+	
+	local scale = vmath.vector3(0, 0, 1)
+	gui.animate(self.boost_icon_user, gui.PROP_SCALE, scale, gui.EASING_OUTSINE, 0.1)
+end
+
+local function open_enemy_boost(self)
+	gui.set_enabled(self.boost_icon_enemy, true)
+	
+	local scale = vmath.vector3(0, 0, 1)
+	gui.set_scale(self.boost_icon_enemy, scale)
+	scale.x = 1
+	scale.y = 1
+	gui.animate(self.boost_icon_enemy, gui.PROP_SCALE, scale, gui.EASING_OUTSINE, 0.2)
+end
+
+local function hide_enemy_boost(self)
+	gui.set_enabled(self.boost_icon_enemy, true)
+	
+	local scale = vmath.vector3(0, 0, 1)
+	gui.animate(self.boost_icon_enemy, gui.PROP_SCALE, scale, gui.EASING_OUTSINE, 0.1)
+end
+
+local function set_hearts(value, max_value, for_user)
+	local full_heart = math.floor(value / 2)
+	for_user = ( (for_user == nil) and true or false ) 
+	local anim, prefix = "", (for_user and "uh" or "eh")
+	max_value = math.ceil(max_value / 2)
+
+	for i = 1, 6 do
+		local node = gui.get_node(prefix..tostring(i))
+		
+		if i <= max_value then
+			gui.set_enabled(node, true)
+			if i <= full_heart then
+				anim = "heart_full"
+			elseif (i * 2 - value) == 1 then
+				anim = "heart_half"
+			else
+				anim = "heart_empty"
+			end
+			
+			gui.play_flipbook(node, anim)
+		else
+			gui.set_enabled(node, false)
+		end
+	end
+end
+
+--------------------------------------------------------------
+
+local NEW_ROUND_TIME = 1.2
+
+function init(self)
+    --msg.post("#", "disable")
+    
+    self.DOWN = gui.get_node("DOWN")
+  	self.TOP = gui.get_node("TOP")
+    self.passed = gui.get_node("passed") 
+    
+  reset_scale(self)
+    
+   	--gui.set_scale(self.DOWN, vmath.vector3(sc, sc, sc))
+	--gui.set_scale(self.top_table, vmath.vector3(sc, sc, sc))
+	--utils.re_position(self.TOP, true)
+	--utils.re_position(self.DOWN, true)
+    
+    -- cards
+    self.def_ucard_begin = {x = 0, y = 0}
+    self.def_ecard_begin = {x = 0, y = 0}
+    
+    self.def_ucard_end = {x = 0, y = 0}
+    self.def_ecard_end = {x = 0, y = 0}
+    
+    self.card_mockup = gui.get_node("card/body")
+    
+    self.boost_icon_user = gui.get_node("icon_u")
+    self.boost_new = gui.get_node("new_boost")
+    self.boost_icon_enemy = gui.get_node("icon_e")
+    
+   -- self.afterbattle = gui.get_node("afterbattle")
+    
+    --gui.new_spine_node(vmath.vector3(50,250,0), "wolf")
+end
+
+function prepare_for_battle(self)
+	msg.post("#", "acquire_input_focus")
+	
+	math.randomseed(os.time())
+	
+	loc_timer = LTimer:new()
+
+	self.parent = nil
+    
+    self.cards_in_hand = config.countCardsInHand
+    self.round = 0
+    
+    self.enemy_type = 0
+    
+    self.def_ucard_begin.x = 0
+    self.def_ucard_begin.y = 0
+    
+    self.def_ecard_begin.x = 0
+    self.def_ecard_begin.y = 0
+    
+    self.def_ucard_end.x = 0
+    self.def_ucard_end.y = 0
+    
+    self.def_ecard_end.x = 0
+    self.def_ecard_end.y = 0
+    
+    self.cards = {} -- карты в руке + карта врага
+    self.dead_cards = {} -- сброс
+    self.preview_card = nil 
+    
+    self.boost_user = nil
+    self.boost_enemy = nil
+    self.user_set_boost_now = false -- бустер установлен только что
+    self.count_user_boost = 0  -- количество бустеров в руке у пользователя
+    
+    gui.set_enabled(self.boost_icon_user, false)
+    gui.set_enabled(self.boost_icon_enemy, false)
+    gui.set_enabled(self.boost_new, false)
+    gui.set_enabled(self.passed, false)
+    
+	--gui.set_enabled(self.afterbattle, false)
+    
+    -- готовим карты
+    for i = 0, 1 do
+    	for j = 1, #battle_dictionary.cards[i] do
+    		battle_dictionary.cards[i][j].close = false
+    	end
+    end
+    
+    ----
+    local eq = lvlManager.getHeroData().equipments
+    self.user_weapon = (eq[1] == 0) and 0 or 4
+    
+    self.cards_user_conveyor = {}
+    self.cards_enemy_conveyor = {}
+    
+    self.cards_user_cursor = 1
+    self.cards_enemy_cursor = 1
+    
+    --set_hearts(6, 6)
+    --set_hearts(4, 4, false)
+end
+
+function final(self)
+    msg.post("#", "release_input_focus")
+end
+
+	local function update_card(self, card)
+		local node = card["card/body"]
+		
+		local pos = gui.get_position(node)
+		local ang = gui.get_rotation(node).z
+		local scale = gui.get_scale(node).x
+		local alpha = gui.get_color(node).w
+		
+		pos.x = pos.x + (card[1].x - pos.x) * 0.2
+		pos.y = pos.y + (card[1].y - pos.y) * 0.2
+		ang = ang + (card[1].angle - ang) * 0.2
+		scale = scale + (card[1].scale - scale) * 0.2
+		alpha = alpha + (card[1].alpha - alpha) * 0.2
+		
+		gui.set_position(node, pos)
+		gui.set_rotation(node, vmath.vector3(0, 0, ang))
+		gui.set_scale(node, vmath.vector3(scale, scale, 1))
+		gui.set_color(node, vmath.vector4(1, 1, 1, alpha))
+	end
+
+function update(self, dt)
+
+	if loc_timer then
+		loc_timer:update_dt(dt)
+	end
+
+    for i = 1, #self.cards do
+    	update_card(self, self.cards[i])
+	end
+	
+	if self.boost_user then
+		update_card(self, self.boost_user)
+	end
+	
+	if self.boost_enemy then
+		update_card(self, self.boost_enemy)
+	end
+end
+
+	local function sort_conveyor(conveyor)
+		for i = 1, #conveyor do
+			local j = math.random(1, i)
+			local k = conveyor[i]
+			conveyor[i] = conveyor[j]
+			conveyor[j] = k
+		end
+	end
+
+	-- РАСПРЕДЕЛЕНИЕ КАРТ
+	
+	local function add_card_for_user(self, order)
+		--self.count_user_boost
+		--self.cards_in_hand
+	--[[	
+		local count_cards = #battle_dictionary.cards[0]
+		local indx, card
+		
+		repeat
+			indx = math.random(1, count_cards)
+			card = battle_dictionary.cards[0][indx]
+		until card.close ~= true
+		
+		if card.boost then
+			card.close = true
+		end
+	--]]
+	
+		local indx = self.cards_user_conveyor[1]
+		local card = battle_dictionary.cards[self.user_weapon][indx]
+
+		add_card(self, order, vmath.vector3(self.def_ucard_begin.x, self.def_ucard_begin.y, 0), false, card, {index = indx})
+		
+		table.remove(self.cards_user_conveyor, 1)
+		
+		--[[
+		self.cards_user_cursor = self.cards_user_cursor + 1
+		if self.cards_user_cursor > #self.cards_user_conveyor then
+			self.cards_user_cursor = 1
+			sort_conveyor(self.cards_user_conveyor)
+		end
+		--]]
+		
+		--add_card(self, i, vmath.vector3(self.def_ucard_begin.x, self.def_ucard_begin.y, 0), 
+		--	{id = 1, boost = (i==3 or i == 4), life_time = 2})
+	end
+
+	local function add_card_for_enemy(self)
+	--[[
+		local count_cards = #battle_dictionary.cards[1]
+		local indx, card
+		
+		repeat
+			indx = math.random(1, count_cards)
+			card = battle_dictionary.cards[1][indx]
+		until card.close ~= true
+
+		if card.boost then
+			card.close = true
+		end
+		--]]
+		--local count_cards = #battle_dictionary.cards[self.enemy_type]
+		
+		local indx = self.cards_enemy_conveyor[self.cards_enemy_cursor] --math.random(1, count_cards)
+		local card = battle_dictionary.cards[self.enemy_type][indx]
+		
+		add_card(self, -1, vmath.vector3(self.def_ecard_begin.x, self.def_ecard_begin.y, 0), false, card, {index = indx})
+		
+		self.cards_enemy_cursor = self.cards_enemy_cursor + 1
+		if self.cards_enemy_cursor > #self.cards_enemy_conveyor then
+			self.cards_enemy_cursor = 1
+			--sort_conveyor(self.cards_enemy_conveyor)
+		end
+	end
+
+	local function add_boost_for_enemy(self)
+		local indx = math.random(1, 2)
+		local card = battle_dictionary.cards[1][indx]
+		
+		self.boost_enemy = add_card(self, -1, vmath.vector3(self.def_ecard_begin.x, self.def_ecard_begin.y, 0), true, card, 
+    			{index = indx, angle = 16, scale = 0, alpha = 0})
+		set_card_parameters(self, self.boost_enemy, 
+    		{order = -1, x = 640+200, y = 121+200, block = true, preview = false}, true)
+    		
+    	open_enemy_boost(self)
+	end
+	
+	---------------------------------------
+	
+	local function update_boost_life_time(self, user)
+		local card 
+		
+		if user then
+			card = self.boost_user
+		else
+			card = self.boost_enemy 
+		end
+		
+		if card then
+			if card.life_time > -1 then
+				card.life_time = card.life_time - 1
+				
+				if card.life_time == 0 then
+					gui.delete_node(card["card/body"])
+					
+					if user then
+						hide_user_boost(self)
+						self.boost_user = nil
+					else
+						hide_enemy_boost(self)
+						self.boost_enemy = nil
+					end
+					
+					--pprint(card)
+					delete_card(card)
+					card = nil
+				end
+			end
+		end
+	end
+
+	local function show_card(self, card, order, cx, cy)
+		local data = solve_user_card_orientation(self, order, cx, cy)
+	    set_card_parameters(self, card, 
+	    	{order = order, x = data.x, y = data.y, angle = data.angle, scale = data.scale, alpha = 1}, true)
+	end
+
+	local function new_round(self)
+		self.cards_in_hand = config.countCardsInHand
+		local count_new_card = (self.cards_in_hand-#self.cards) - 1
+		
+		self.user_set_boost_now = false
+		gui.set_enabled(self.boost_new, false)
+
+		for i = 1, #self.cards do
+    		local data = solve_user_card_orientation(self, i + count_new_card, self.def_ucard_end.x, self.def_ucard_end.y)
+    		set_card_parameters(self, self.cards[i], 
+	    			{order = i + count_new_card, x = data.x, y = data.y, angle = data.angle, scale = data.scale}, true)
+    	end
+    	
+    	for i = 0, count_new_card do
+    		--add_card(self, i, vmath.vector3(self.def_ucard_begin.x, self.def_ucard_begin.y, 0), {id = 1, boost = false})
+    		add_card_for_user(self, i)
+    	end
+    	
+    	-- add_card(self, -1, vmath.vector3(self.def_ecard_begin.x, self.def_ecard_begin.y, 0), {id = 1, boost = false})
+    	add_card_for_enemy(self)
+    	
+    	loc_timer:get_timeout(0.1, function()
+    	
+    		for i = 0, count_new_card do
+    			show_card(self, self.cards[i+1], i, self.def_ucard_end.x, self.def_ucard_end.y)
+    		end
+    		
+    		show_card(self, self.cards[#self.cards], -1, self.def_ecard_end.x, self.def_ecard_end.y)
+    		
+    		for i = 1, #self.cards do
+	    		set_card_parameters(self, self.cards[i], {block = false}, true)
+	    	end
+	    	
+	    	update_boost_life_time(self, true)
+	    	update_boost_life_time(self, false)
+	    	
+    	end)
+	end 
+	
+
+function on_message(self, message_id, message, sender)
+	if message_id == hash("show_table") then
+		
+		prepare_for_battle(self)
+		
+		self.enemy_type = message.enemy_type - 50 + 1
+		
+		for i = 1, #battle_dictionary.cards[self.enemy_type] do
+			table.insert(self.cards_enemy_conveyor, i)
+		end
+		
+		for i = 1, #battle_dictionary.cards[self.user_weapon] do
+			table.insert(self.cards_user_conveyor, i)
+		end
+		
+		sort_conveyor(self.cards_enemy_conveyor)
+		sort_conveyor(self.cards_user_conveyor)
+		
+		--[[
+		for i = 1, #self.cards_enemy_conveyor do
+			local j = math.random(1, i)
+			local k = self.cards_enemy_conveyor[i]
+			self.cards_enemy_conveyor[i] = self.cards_enemy_conveyor[j]
+			self.cards_enemy_conveyor[j] = k
+		end
+		--]]
+		
+		--if message.ups == 2 then print("UPS") return end
+			
+		self.parent = message.parent
+		
+		-- инициализация начальных положений
+		self.def_ucard_begin.x = message.def_ucard_bx
+	    self.def_ucard_begin.y = message.def_ucard_by
+	    
+	    self.def_ecard_begin.x = message.def_ecard_bx
+	    self.def_ecard_begin.y = message.def_ecard_by
+	    
+	    self.def_ucard_end.x = message.def_ucard_ex
+	    self.def_ucard_end.y = message.def_ucard_ey
+	    
+	    self.def_ecard_end.x = message.def_ecard_ex
+	    self.def_ecard_end.y = message.def_ecard_ey
+
+		-- создаем руку с картами
+		for i = 0, config.countCardsInHand-1 do
+			add_card_for_user(self, i)
+		end
+		
+		-- карта врага
+		add_card_for_enemy(self)
+		
+		-- показываем их
+		loc_timer:get_timeout(1, function()
+			--print("SHOW 3.5", self.cards)
+			for i = 1, #self.cards-1 do
+				--print("SHOW 4", self.cards[i], i - 1, self.def_ucard_end.x, self.def_ucard_end.y)
+				show_card(self, self.cards[i], i - 1, self.def_ucard_end.x, self.def_ucard_end.y)
+				--print("SHOW 5")
+	    	end
+	    end)
+	    
+	    loc_timer:get_timeout(1.2, function()
+    		show_card(self, self.cards[#self.cards], -1, self.def_ecard_end.x, self.def_ecard_end.y)
+    		--print("SHOW 6")
+	    end)
+	    
+	elseif message_id == hash("free") then
+		msg.post("#", "release_input_focus")
+		loc_timer:clear_all()
+		loc_timer = nil
+		
+	    self.preview_card = nil 
+	    
+		while #self.cards > 0 do
+			delete_card( table.remove(self.cards, 1) )
+		end
+		
+		while #self.dead_cards > 0 do
+			delete_card( table.remove(self.dead_cards, 1) )
+		end
+		
+		if self.boost_user ~= nil then
+			delete_card(self.boost_user)
+		end
+		
+		if self.boost_enemy ~= nil then
+			delete_card(self.boost_enemy)
+		end
+		
+		self.boost_user = nil
+	    self.boost_enemy = nil
+	    
+	elseif message_id == hash("set_characters") then
+		set_hearts(message.ucur, message.umax)
+    	set_hearts(message.ecur, message.emax, false)
+	
+    elseif message_id == hash("unblock_cards") then
+    	for i = 1, #self.cards do
+    		set_card_parameters(self, self.cards[i], {block = false}, true)
+    	end
+    	
+    elseif message_id == hash("on_table") then
+
+		self.round = self.round + 1
+		
+		local user_card = self.cards[message.index]
+		
+		local enemy_card = self.cards[#self.cards]
+		
+    	msg.post(self.parent, "start_battle", {user = user_card.index, enemy = enemy_card.index, user_weapon = self.user_weapon})
+    	
+    	gui.animate(user_card["card/body"], gui.PROP_COLOR, vmath.vector3(0.8, 0.8, 0.8), gui.EASING_OUTINSINE, 0.1, 1.2)
+	    gui.animate(enemy_card["card/body"], gui.PROP_COLOR, vmath.vector3(0.8, 0.8, 0.8), gui.EASING_OUTINSINE, 0.1, 1.2)
+	    
+	    set_card_parameters(self, user_card, {order = (self.round - 1) % 5})
+	    
+	    if (self.round - 1) % 5 == 0 then
+	    	for i = 1, #self.dead_cards, 2 do
+	    		set_card_parameters(self, self.dead_cards[i], {order = -1})
+	    	end
+	    end
+
+	    table.insert(self.dead_cards, user_card)
+	    table.insert(self.dead_cards, enemy_card)
+
+    	loc_timer:get_timeout(0.2, function()
+	    	table.remove(self.cards, message.index)
+	    	table.remove(self.cards, #self.cards)
+	    	
+		    if #self.dead_cards > config.countDeletedCards then
+		    	delete_card(self.dead_cards[1])
+		    	delete_card(self.dead_cards[2])
+		    	
+		    	table.remove(self.dead_cards, 1)
+		    	table.remove(self.dead_cards, 1)
+		    end
+
+    	end)
+    
+    elseif 	message_id == hash("new_round") then
+    	new_round(self)
+    	
+    elseif 	message_id == hash("passed_round") then
+    	loc_timer:get_timeout(0.2, function()
+    		gui.set_position(self.passed, vmath.vector3(640, 110, 1));
+    		gui.set_color(self.passed, vmath.vector4(1, 1, 1, 0))
+    		gui.set_enabled(self.passed, true)
+    		
+    		local general_delay = 0.3
+    		local easing = gui.EASING_OUTEXPO
+    		
+    		gui.animate(self.passed, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 1), easing, general_delay)
+    		gui.animate(self.passed, gui.PROP_POSITION, vmath.vector3(640, 400 + 100, 1), easing, general_delay, 0, function()
+    			local local_delay = 0.25 
+    			general_delay = general_delay * 1
+    			gui.animate(self.passed, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 0), easing, general_delay, local_delay, function()
+    				gui.set_enabled(self.passed, false)
+    			end)
+    			gui.animate(self.passed, gui.PROP_POSITION, vmath.vector3(640, 400 + 150, 1), easing, general_delay, local_delay)
+    		end)
+    	end)
+    	
+    elseif message_id == hash("afterbattle_win") then
+    	--gui.set_enabled(self.afterbattle, "true")
+    	--gui.play_spine(self.afterbattle, "idle", gui.PLAYBACK_ONCE_FORWARD, 0.1, function ()
+		--    print("Animation done!")
+		--end)
+    	
+    end
+end
+
+	-- для подпрыгивания карт
+	local function put_down_cards(self, selected_card, nil_selected_card)
+		for i = 1, #self.cards do
+			if self.cards[i][1].preview == false and self.cards[i][1].order ~= -1
+				and self.cards[i][1].block == false then
+				
+				reset_card_parameters(self, self.cards[i])
+				
+				if selected_card ~= nil then
+					loc_timer:get_timeout(nil_selected_card and 0.05 or 0.1, function()
+						set_card_parameters(self, self.cards[i], {y = self.cards[i][1].res_y - 100})
+					end)
+				end
+			end
+		end
+	end
+	
+	local function ihave_card_on_preview(self)
+		if self.boost_user and self.boost_user[1].preview then return true end
+		if self.boost_enemy and self.boost_enemy[1].preview then return true end
+		
+		return self.preview_card ~= nil
+	end
+
+function on_input(self, action_id, action)
+    if action_id == nil then
+		return
+	end
+	
+	if action_id == hash("click_screen") then
+		if action.pressed == true then
+		
+			-- ТУТ У НАС БУСТЫ
+			
+			if self.boost_user or self.boost_enemy then
+			
+				local i_have_preview = ihave_card_on_preview(self)
+			
+				-- на столе пользовательский буст
+				if self.boost_user then
+				
+					if i_have_preview == false then
+						if gui.pick_node(self.boost_icon_user, action.x, action.y) then  -- and self.boost_user[1].preview == false
+							
+							if self.user_set_boost_now then -- если буст свежий, как сосиски для Рамси
+								hide_user_boost(self)
+								self.cards_in_hand = self.cards_in_hand + 1
+								
+								self.count_user_boost = self.count_user_boost + 1 -- убрали буст
+								
+								set_card_parameters(self, self.boost_user, {block = false}, true)
+								table.insert(self.cards, 1, self.boost_user)
+								self.boost_user = nil
+								
+								for i = 1, #self.cards-1 do
+							    	show_card(self, self.cards[i], i-1, self.def_ucard_end.x, self.def_ucard_end.y)
+						    	end
+							else -- а если старый буст, то
+								set_card_parameters(self, self.boost_user, 
+			    					{x = 640, y = 500, angle = 0, scale = SCALE_PREVIEW, alpha = 1, preview = true})
+		
+								if self.preview_card then	
+									reset_card_parameters(self, self.cards[self.preview_card], {preview = false})
+									self.preview_card = nil
+								end
+								
+								gui.animate(self.boost_icon_user, gui.PROP_SCALE, vmath.vector3(0.9, 0.9, 1), gui.EASING_OUTSINE, 0.1)
+			    				
+			    				put_down_cards(self, true, true)
+		
+							end -- разбор свежести буста
+							
+							if self.boost_enemy and self.boost_enemy[1].preview then
+								--put_down_cards(self)
+								reset_card_parameters(self, self.boost_enemy, {preview = false})
+								gui.animate(self.boost_icon_enemy, gui.PROP_SCALE, vmath.vector3(1, 1, 1), gui.EASING_OUTSINE, 0.1)
+							end
+							
+							return 
+							--return_from_here = true
+						end -- тыкнули в свой буст
+					end
+					
+					if self.boost_user and self.boost_user[1].preview then
+						put_down_cards(self)
+						reset_card_parameters(self, self.boost_user, {preview = false})
+						gui.animate(self.boost_icon_user, gui.PROP_SCALE, vmath.vector3(1, 1, 1), gui.EASING_OUTSINE, 0.1)
+					end
+					
+				end -- пользовательский буст все
+				
+				-- на столе вражеский буст
+				if self.boost_enemy then
+					if i_have_preview == false then
+						if gui.pick_node(self.boost_icon_enemy, action.x, action.y) then --and self.boost_enemy[1].preview == false
+							set_card_parameters(self, self.boost_enemy, 
+		    					{x = 640, y = 500, angle = 0, scale = SCALE_PREVIEW, alpha = 1, preview = true})
+	
+							if self.preview_card then	
+								reset_card_parameters(self, self.cards[self.preview_card], {preview = false})
+								self.preview_card = nil
+							end
+							
+							gui.animate(self.boost_icon_enemy, gui.PROP_SCALE, vmath.vector3(0.9, 0.9, 1), gui.EASING_OUTSINE, 0.1)
+		    				
+		    				put_down_cards(self, true, true)
+			    				
+							return
+						end -- тыкнули во вражеский буст
+					end
+					
+					if self.boost_enemy and self.boost_enemy[1].preview then
+						put_down_cards(self)
+						reset_card_parameters(self, self.boost_enemy, {preview = false})
+						gui.animate(self.boost_icon_enemy, gui.PROP_SCALE, vmath.vector3(1, 1, 1), gui.EASING_OUTSINE, 0.1)
+					end
+					
+				end -- вражеский буст на столе
+				
+			end
+
+			-- ТУТ ОБРАБОТКА ОБЫЧНЫХ КАРТ
+			
+			local selected_card = nil
+		
+			-- тыкнули в карту?
+			for i = #self.cards, 1, -1 do 
+				local node = self.cards[i]["card/body"]
+				
+				if self.cards[i][1].block == false and gui.pick_node(node, action.x, action.y) then
+					selected_card = i
+					set_card_parameters(self, self.cards[i], 
+		    				{x = 640, y = 500, angle = 0, scale = SCALE_PREVIEW, preview = true})
+		    		break
+		    	end
+			end
+			
+			if self.preview_card ~= nil then
+				if self.preview_card ~= selected_card then		-- если карта уже не выделена (на привью), то
+					reset_card_parameters(self, self.cards[self.preview_card], {preview = false})
+				else	-- иначе, надо ее кинуть на стол (в случае с юзерскими), либо убрать
+					
+					if self.cards[selected_card][1].order ~= -1 then	-- если юзера
+						
+						self.preview_card = nil
+						
+						-- карта становится чуть больше
+						set_card_parameters(self, self.cards[selected_card], {scale = 1.9})
+						
+						if self.cards[selected_card].template.boost then -- если карта БУСТ
+						
+							loc_timer:get_timeout(0.15, function()
+								set_card_parameters(self, self.cards[selected_card], 
+									{scale = 0.1, alpha = 0, x = 640-200, angle = -16, y = 121+200, block = true, preview = false}, true)
+								
+								if self.boost_user ~= nil then  -- если буст уже лежит
+								
+									hide_user_boost(self)
+									
+									if self.user_set_boost_now then
+										old_boost = true
+										set_card_parameters(self, self.boost_user, {block = false}, true)
+										table.insert(self.cards, 1, self.boost_user)
+										self.cards_in_hand = self.cards_in_hand + 1
+										selected_card = selected_card + 1
+									else
+										gui.delete_node(self.boost_user["card/body"])
+									end
+									
+									self.boost_user = nil
+								end
+								
+								self.boost_user = self.cards[selected_card]
+								open_user_boost(self)
+								self.cards_in_hand = self.cards_in_hand - 1
+								self.user_set_boost_now = true
+								self.count_user_boost = self.count_user_boost - 1
+								
+								loc_timer:get_timeout(0.25, function()
+									gui.set_color(self.cards[selected_card]["card/body"], vmath.vector4(1, 1, 1, 0))
+									table.remove(self.cards, selected_card)
+									
+									for i = 1, #self.cards-1 do
+								    	show_card(self, self.cards[i], i-1, self.def_ucard_end.x, self.def_ucard_end.y)
+							    	end
+								end)
+								
+							end)
+						else -- ЕСЛИ НЕ БУСТ
+							-- а тут мы ее кладем на выбранное место
+							loc_timer:get_timeout(0.15, function()
+							
+								local dir = self.round == 0 and 0 or (math.random() < 0.5 and 1 or -1)
+								set_card_parameters(self, self.cards[selected_card], 
+									{scale = SCALE_MINI+0.1, x = 220, y = config.defaultHeight * 0.5 - 280, angle = 6 + (4 + math.random()*4) * dir, preview = false})
+									
+								--print("ADD CARD:", self.cards[selected_card].index)
+								table.insert(self.cards_user_conveyor, self.cards[selected_card].index)
+									
+								loc_timer:get_timeout(0.18, function()
+									set_card_parameters(self, self.cards[selected_card], {scale = SCALE_MINI, y = config.defaultHeight * 0.5 - 280})
+	
+									msg.post("#", "on_table", {index = selected_card})
+								end)
+							end)
+							
+							for i = 1, #self.cards do
+								self.cards[i][1].block = true
+							end
+						end -- бросание карты
+	
+						
+					else  -- если не юзера карта
+						self.preview_card = nil
+						
+						for i = 1, #self.cards do
+							reset_card_parameters(self, self.cards[i], {preview = false})
+						end
+					end
+					
+					return
+				end -- работа с картой на привью
+			end -- если привью было непустое
+			
+			local nil_selected_card = (self.selected_card == nil)
+			self.preview_card = selected_card
+			
+			put_down_cards(self, selected_card, nil_selected_card)
+
+			return true
+		end	
+	end
+end

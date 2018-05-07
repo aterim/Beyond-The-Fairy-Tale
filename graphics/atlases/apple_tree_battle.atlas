@@ -1,0 +1,165 @@
+images {
+  image: "/graphics/objects/apple_tree_battle_part/apple_a.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/apple_b.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/apple_c.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/apple_d.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/apple_e.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/apple_f.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battleliana_lu_a.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battleliana_lu_b.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battleliana_lu_c.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battletwig_dr_a.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battletwig_dr_b.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battletwig_dr_c.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battletwig_dr_d.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battletwig_rc_a.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battletwig_rc_b.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battletwig_rc_c.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battletwig_rc_d.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battletwig_rc_e.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battletwig_rc_f.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battletwig_rc_g.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battletwig_ur_a.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battletwig_ur_b.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battletwig_ur_c.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battletwig_ur_d.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/battletwig_ur_e.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/body_a.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/body_b.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/body_c.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/eyelid_d.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/eyelid_u.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/leaves_d.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/liana_ld.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/main.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/pupil.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/root_a.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/root_b.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/shield_back.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/shield_d.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/shield_r.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/skin.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/trunk.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/twig_cl_a.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/twig_cl_b.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/twig_cl_c.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/twig_cl_d.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/twig_l.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/twig_ld.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/twig_little_d.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/twig_little_ru.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/twig_lu.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/twig_ul_a.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/twig_ul_b.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/twig_ul_c.png"
+}
+images {
+  image: "/graphics/objects/apple_tree_battle_part/twig_ul_d.png"
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0

@@ -1,0 +1,41 @@
+script: "/game/ui/options.gui_script"
+textures {
+  name: "ui"
+  texture: "/graphics/atlases/ui.atlas"
+}
+background_color {
+  w: 1.0
+}
+nodes {
+  position {
+    x: 1155.6035
+    y: 745.17834
+    w: 1.0
+  }
+  rotation {
+    w: 1.0
+  }
+  scale {
+    x: 0.5
+    y: 0.5
+    z: 0.5
+    w: 1.0
+  }
+  size {
+    x: 140.0
+    y: 140.0
+    w: 1.0
+  }
+  color {
+    x: 1.0
+    y: 1.0
+    z: 1.0
+    w: 1.0
+  }
+  texture: "ui/options"
+  id: "options"
+  inherit_alpha: true
+  size_mode: SIZE_MODE_AUTO
+}
+material: "/main/materials/scaleGUI.material"
+adjust_reference: ADJUST_REFERENCE_PARENT

@@ -1,0 +1,92 @@
+local utils = require "utils.utils"
+local config = require "main.config.config"
+
+function init(self)
+	msg.post("#", "acquire_input_focus")
+    self.bg = gui.get_node("bg")
+    
+    self.caption = gui.get_node("caption")
+    self.start = gui.get_node("start")
+    self.credits = gui.get_node("credits")
+    
+    self.main_box = gui.get_node("main_box")
+    self.credits_box = gui.get_node("credits_box")
+
+    gui.set_color(self.credits_box, vmath.vector4(1, 1, 1, 0))
+    
+    local scale = 1/config.ratio * config.ratio_max 
+    gui.set_scale(self.bg, vmath.vector3(scale*0.9,scale*0.9,scale*0.9))
+    
+    gui.animate(self.bg, gui.PROP_SCALE, vmath.vector3(scale*0.85,scale*0.85,scale*0.85), gui.EASING_OUTCIRC, 5)
+
+	gui.set_color(self.caption, vmath.vector4(1,1,1,0))
+    gui.animate(self.caption, gui.PROP_COLOR, vmath.vector4(1,1,1,1), gui.EASING_OUTCIRC, 2, 1)
+    
+    local pos = gui.get_position(self.caption)
+    pos.y = pos.y - 20
+    gui.animate(self.caption, gui.PROP_POSITION, pos, gui.EASING_INOUTSINE, 5, 0.5, nil, gui.PLAYBACK_LOOP_PINGPONG)
+    
+    gui.set_color(self.start, vmath.vector4(1,1,1,0))
+    gui.animate(self.start, gui.PROP_COLOR, vmath.vector4(1,1,1,1), gui.EASING_OUTCIRC, 2, 1.3)
+
+
+    gui.set_color(self.credits, vmath.vector4(1,1,1,0))
+    gui.animate(self.credits, gui.PROP_COLOR, vmath.vector4(1,1,1,1), gui.EASING_OUTCIRC, 2, 1.35)
+    
+    self.selected_node = {0}
+    
+    self.set_credits_screen = false
+end
+
+function final(self)
+    msg.post("#", "release_input_focus")
+end
+
+function update(self, dt)
+    -- Add update code here
+    -- Remove this function if not needed
+end
+
+function on_message(self, message_id, message, sender)
+    -- Add message-handling code here
+    -- Remove this function if not needed
+end
+
+	local function gamestart_cb(self, node, parameters)
+		msg.post("main:/main#script", "load_intro") -- ui#
+		msg.post("main:/main#script", "start_sound", {name = "click"}) 
+		
+		config.bgColor = vmath.vector4(30/255, 35/255, 41/255, 0)
+	end
+	
+	local function credits_cb(self, node, parameters)
+		self.set_credits_screen = true
+		gui.animate(self.credits_box, gui.PROP_COLOR, vmath.vector4(1,1,1,1), gui.EASING_OUTCIRC, 0.3)
+		gui.animate(self.main_box, gui.PROP_COLOR, vmath.vector4(1,1,1,0), gui.EASING_OUTCIRC, 0.3)
+		msg.post("main:/main#script", "start_sound", {name = "click"}) 
+	end
+
+function on_input(self, action_id, action)
+	
+	--if (action_id == hash("click_screen") or action_id == hash("tap_screen")) then
+    if action_id == hash("click_screen") then
+    	local res = false
+    	if self.set_credits_screen == false then
+    		res = utils.button_reaction(self, self.credits, action, credits_cb, nil, self.selected_node, {scale = gui.get_scale(self.credits).z}) or
+    				utils.button_reaction(self, self.start, action, gamestart_cb, nil, self.selected_node, {scale = gui.get_scale(self.start).z})
+    	else			
+    		if action.released then
+    			self.set_credits_screen = false
+				gui.animate(self.credits_box, gui.PROP_COLOR, vmath.vector4(1,1,1,0), gui.EASING_OUTCIRC, 0.3)
+				gui.animate(self.main_box, gui.PROP_COLOR, vmath.vector4(1,1,1,1), gui.EASING_OUTCIRC, 0.3)
+    		end
+    	end
+    	
+		return res
+	end
+end
+
+function on_reload(self)
+    -- Add input-handling code here
+    -- Remove this function if not needed
+end

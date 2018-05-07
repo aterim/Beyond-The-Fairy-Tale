@@ -64,7 +64,7 @@ function init(self)
 	--load_demo(self)
 	lvlManager.first = true
 	lvlManager.loadSave("slot01")
-	msg.post("/mixer#thema", "play_sound", {gain = 0.1})
+	msg.post("/mixer#menu_thema", "play_sound", {gain = 0.1})
 	load_main_menu(self)
 end
 
@@ -153,12 +153,14 @@ function on_message(self, message_id, message, sender)
 		
 	elseif message_id == hash("load_intro") then
 		msg.post("prebattle", "show")
-		
+
+		print("--pum")
 		getTimer(1.2, function()
+			print("pum")
 			msg.post("main#main_menu", "disable")
 			msg.post("main#main_menu", "final")
 			msg.post("main#main_menu", "unload")
-			
+
 			msg.post("/mixer#menu_thema", "set_gain", {gain = 0.05})
 		end)
 		

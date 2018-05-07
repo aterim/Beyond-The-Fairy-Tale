@@ -17,16 +17,13 @@
 
 
 ----
-## Поиграть
+## Поиграть-посмотреть
 Последние публичные версии:
 
 * [RUS](http://aterim.github.io/html5/skazka_rusdemo/) *(частичный, без вычитки)*
 * [ENG](http://aterim.github.io/html5/skazka/)
-
 * [Defold Community](https://www.defold.com/community/projects/40372/)
-
-## Арт
-[Подборка арта по проекту](https://www.artstation.com/artwork/oNbym)
+* [Небольшая подборка арта на Artstation](https://www.artstation.com/artwork/oNbym)
 
 ----
 ## Авторы

@@ -23,6 +23,7 @@
 * [RUS](http://aterim.github.io/html5/skazka_rusdemo/) *(частичный, без вычитки)*
 * [ENG](http://aterim.github.io/html5/skazka/)
 
+* [Defold Community](https://www.defold.com/community/projects/40372/)
 
 ----
 ## Авторы
